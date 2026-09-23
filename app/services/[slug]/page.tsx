@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import PublicationCard from "@/components/insights/PublicationCard";
 import ServiceCard from "@/components/services/ServiceCard";
 import Arrow from "@/components/ui/Arrow";
 import ContactCta from "@/components/ui/ContactCta";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
+import { getPublicationsForService } from "@/lib/content/publications";
 import { serviceDetails } from "@/lib/content/service-details";
 import { getPublicService, getPublicServices, getServiceGroup } from "@/lib/content/services";
 
@@ -38,8 +40,8 @@ export default async function ServicePage({ params }: { params: Params }) {
   const related = detail.related
     .map((id) => publicServices.find((s) => s.id === id))
     .filter((s) => s !== undefined);
-  // Approved publications tagged to this service arrive with the CMS (Step 8).
-  const insights: { title: string; href: string }[] = [];
+  // Up to three approved publications tagged to this service (guide p.30).
+  const insights = getPublicationsForService(service.id);
 
   const sections = [
     { id: "overview", label: "Overview" },
@@ -138,10 +140,8 @@ export default async function ServicePage({ params }: { params: Params }) {
         {insights.length > 0 ? (
           <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
             {insights.map((item) => (
-              <li key={item.href} className="border-t border-line pt-5">
-                <Link href={item.href} className="font-serif text-[21px] leading-[28px] hover:text-action">
-                  {item.title}
-                </Link>
+              <li key={`${item.type}-${item.slug}`}>
+                <PublicationCard publication={item} />
               </li>
             ))}
           </ul>

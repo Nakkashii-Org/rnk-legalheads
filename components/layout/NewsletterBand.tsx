@@ -4,7 +4,7 @@ import Arrow from "@/components/ui/Arrow";
 /** Shared newsletter invitation shown above the footer on every page (guide p.17, p.30). */
 export default function NewsletterBand() {
   return (
-    <section aria-labelledby="newsletter-band-title" className="bg-warm">
+    <section aria-labelledby="newsletter-band-title" className="bg-warm print:hidden">
       <div className="shell flex flex-col items-start justify-between gap-6 py-12 md:flex-row md:items-center">
         <div>
           <h2 id="newsletter-band-title" className="font-serif text-[24px] leading-[32px] md:text-[28px] md:leading-[36px]">

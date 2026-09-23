@@ -1,8 +1,9 @@
 import Link from "next/link";
 import HeroSlider from "@/components/home/HeroSlider";
+import PublicationCard from "@/components/insights/PublicationCard";
 import Arrow from "@/components/ui/Arrow";
 import { getHomeIndustries } from "@/lib/content/industries";
-import { getHomePublications, publicationTypeMeta } from "@/lib/content/publications";
+import { getHomePublications } from "@/lib/content/publications";
 import { getPublicGroups, groupHref } from "@/lib/content/services";
 import { heroSlides } from "@/lib/content/site";
 
@@ -105,24 +106,12 @@ export default function HomePage() {
               </p>
             )}
 
-            <ul className="mt-6 grid gap-x-8 gap-y-10 md:grid-cols-3">
-              {publications.map((item) => {
-                const meta = publicationTypeMeta[item.type];
-                return (
-                  <li key={item.href} className="border-t border-line pt-5">
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-muted">
-                      {meta.label}
-                      {item.preview && " / Layout preview"}
-                    </p>
-                    <h3 className="mt-3 font-serif text-[21px] leading-[28px]">{item.title}</h3>
-                    <p className="mt-3 text-[14px] leading-[22px] text-muted">{item.summary}</p>
-                    <Link href={item.href} className="link-action mt-2">
-                      {meta.action}
-                      <span className="sr-only">: {item.title}</span> <Arrow />
-                    </Link>
-                  </li>
-                );
-              })}
+            <ul className="mt-6 grid gap-x-8 md:grid-cols-3">
+              {publications.map((item) => (
+                <li key={`${item.type}-${item.slug}`}>
+                  <PublicationCard publication={item} />
+                </li>
+              ))}
             </ul>
           </div>
         </section>

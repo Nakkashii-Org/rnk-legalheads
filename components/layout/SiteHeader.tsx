@@ -90,7 +90,7 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
   }, [mobileOpen]);
 
   return (
-    <header className="relative z-40 border-b border-line bg-canvas">
+    <header className="relative z-40 border-b border-line bg-canvas print:hidden">
       <div className="shell-wide flex h-[var(--header-height)] items-center justify-between gap-6">
         <Logo />
 

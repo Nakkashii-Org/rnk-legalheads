@@ -1,3 +1,4 @@
+import { getPublicServices } from "@/lib/content/services";
 import { showDrafts } from "@/lib/visibility";
 
 export type Person = {
@@ -48,6 +49,15 @@ export function getPublicPeople(): Person[] {
 
 export function getPublicPerson(slug: string): Person | undefined {
   return getPublicPeople().find((person) => person.slug === slug);
+}
+
+/** Text used by site search: profile fields plus the names of linked services. */
+export function personSearchText(person: Person): string {
+  const services = getPublicServices()
+    .filter((s) => person.serviceIds.includes(s.id))
+    .map((s) => s.title)
+    .join(" ");
+  return `${person.name} ${person.role} ${person.practiceSummary} ${person.biography.join(" ")} ${services}`;
 }
 
 export function filterPeople(list: Person[], name: string, serviceId: string | undefined): Person[] {

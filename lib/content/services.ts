@@ -1,4 +1,5 @@
 import { serviceDetails } from "@/lib/content/service-details";
+import { matchesAll, queryWords } from "@/lib/search";
 import { isPublic } from "@/lib/visibility";
 
 export type ServiceGroupKey =
@@ -105,15 +106,7 @@ export function findGroupByAlias(value: string | undefined): ServiceGroup | unde
   return serviceGroups.find((group) => group.alias.toLowerCase() === needle || group.key === needle);
 }
 
-// Reviewed synonym list (guide p.23). Keys are single lowercase words.
-const searchAliases: Record<string, string> = {
-  ipr: "intellectual property",
-  sarfesi: "sarfaesi",
-  surfacey: "sarfaesi",
-  bail: "criminal defence",
-};
-
-function searchText(service: Service): string {
+export function serviceSearchText(service: Service): string {
   const detail = serviceDetails[service.id];
   const scope = detail ? detail.scope.map((area) => `${area.title} ${area.text}`).join(" ") : "";
   return `${service.title} ${service.summary} ${getServiceGroup(service.group).name} ${scope}`.toLowerCase();
@@ -121,17 +114,10 @@ function searchText(service: Service): string {
 
 /** Group and keyword filters combine (guide p.26). Every query word must match. */
 export function filterServices(list: Service[], group: ServiceGroup | undefined, query: string): Service[] {
-  const words = query
-    .toLowerCase()
-    .split(/\s+/)
-    .filter(Boolean)
-    .flatMap((word) => (searchAliases[word] ?? word).split(" "));
-
+  const words = queryWords(query);
   return list.filter((service) => {
     if (group && service.group !== group.key) return false;
-    if (words.length === 0) return true;
-    const haystack = searchText(service);
-    return words.every((word) => haystack.includes(word));
+    return words.length === 0 || matchesAll(serviceSearchText(service), words);
   });
 }
 

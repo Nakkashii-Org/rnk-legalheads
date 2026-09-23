@@ -6,7 +6,7 @@ export default function SiteFooter() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-canvas">
+    <footer className="bg-canvas print:hidden">
       <div className="shell grid gap-10 border-b border-line py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <Logo />

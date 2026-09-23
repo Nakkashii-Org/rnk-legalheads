@@ -1,10 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // One-hop permanent redirects from the old site (guide pp.11–13).
+  // One-hop permanent redirects from the old site (guide pp.11–13, p.120).
   // /ip-litigation and /ip-prosecution are added once their replacement service pages are approved.
   async redirects() {
-    return [{ source: "/practices", destination: "/services", statusCode: 301 }];
+    return [
+      { source: "/practices", destination: "/services", statusCode: 301 },
+      { source: "/news", destination: "/insights", statusCode: 301 },
+      { source: "/blog", destination: "/articles", statusCode: 301 },
+    ];
   },
 };
 
