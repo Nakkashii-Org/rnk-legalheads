@@ -117,7 +117,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               maxLength={MAX_QUERY_LENGTH}
               placeholder="Search a service, lawyer or topic"
               autoComplete="off"
-              className="h-12 min-w-0 flex-1 border border-[#b9b5af] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
+              className="h-12 min-w-0 flex-1 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
             />
             <button type="submit" className="btn btn-primary h-12 shrink-0 px-6">
               Search
@@ -133,7 +133,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                     scroll={false}
                     aria-current={active ? "true" : undefined}
                     className={`inline-flex min-h-9 items-center border px-3 text-[12px] ${
-                      active ? "border-charcoal bg-charcoal text-white" : "border-[#b9b5af] bg-canvas hover:border-charcoal"
+                      active ? "border-charcoal bg-charcoal text-white" : "border-[#8a8782] bg-canvas hover:border-charcoal"
                     }`}
                   >
                     {t.label}

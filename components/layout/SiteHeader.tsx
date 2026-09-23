@@ -137,7 +137,11 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
               );
             })}
             <li>
-              <Link href="/contact" className="btn btn-secondary min-h-11 px-5 font-normal">
+              <Link
+                href="/contact"
+                aria-current={isActive(pathname, "/contact") ? "page" : undefined}
+                className="btn btn-secondary min-h-11 px-5 font-normal aria-[current=page]:bg-warm"
+              >
                 Contact <Arrow />
               </Link>
             </li>

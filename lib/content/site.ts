@@ -6,6 +6,12 @@ export const site = {
     "This website provides general information. It is not legal advice and does not create a lawyer-client relationship.",
 };
 
+/**
+ * Office contact facts. The office administrator must supply and verify these (guide p.136);
+ * placeholder addresses or unmonitored mailboxes must never go live. Leave undefined until verified.
+ */
+export const contactDetails: { address?: string; phone?: string; email?: string } = {};
+
 export type NavLink = { label: string; href: string };
 
 export const primaryNav: NavLink[] = [

@@ -75,7 +75,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Searc
                   defaultValue={name}
                   maxLength={80}
                   placeholder="Name"
-                  className="h-12 border border-[#b9b5af] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
+                  className="h-12 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
                 />
               </div>
               {serviceOptions.length > 0 && (
@@ -88,7 +88,7 @@ export default async function PeoplePage({ searchParams }: { searchParams: Searc
                     id="people-service"
                     name="service"
                     defaultValue={service?.slug ?? ""}
-                    className="h-12 border border-[#b9b5af] bg-canvas px-3 text-[15px] focus:border-charcoal"
+                    className="h-12 border border-[#8a8782] bg-canvas px-3 text-[15px] focus:border-charcoal"
                   >
                     <option value="">All services</option>
                     {serviceOptions.map((s) => (

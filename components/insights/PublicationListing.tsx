@@ -80,7 +80,7 @@ export default function PublicationListing({ basePath, type, title, lead, breadc
     return s ? `${basePath}?${s}` : basePath;
   };
 
-  const selectClass = "h-12 min-w-0 max-w-full border border-[#b9b5af] bg-canvas px-3 text-[14px] focus:border-charcoal";
+  const selectClass = "h-12 min-w-0 max-w-full border border-[#8a8782] bg-canvas px-3 text-[14px] focus:border-charcoal";
 
   return (
     <>
@@ -102,7 +102,7 @@ export default function PublicationListing({ basePath, type, title, lead, breadc
               defaultValue={query}
               maxLength={MAX_QUERY_LENGTH}
               placeholder="Search topics or keywords"
-              className="h-12 min-w-0 flex-1 border border-[#b9b5af] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
+              className="h-12 min-w-0 flex-1 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
             />
             <button type="submit" className="btn btn-primary h-12 shrink-0 px-6">
               Search

@@ -198,7 +198,7 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               type="button"
               onClick={togglePause}
               aria-label={userPaused ? "Play slideshow" : "Pause slideshow"}
-              className="ml-2 hidden h-11 items-center border border-[#b9b5af] px-4 text-[13px] hover:border-charcoal md:motion-safe:inline-flex"
+              className="ml-2 hidden h-11 items-center border border-[#8a8782] px-4 text-[13px] hover:border-charcoal md:motion-safe:inline-flex"
             >
               {userPaused ? "Play" : "Pause"}
             </button>

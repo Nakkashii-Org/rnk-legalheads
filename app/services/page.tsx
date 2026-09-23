@@ -102,7 +102,7 @@ export default async function ServicesPage({ searchParams }: { searchParams: Sea
               defaultValue={query}
               maxLength={100}
               placeholder="Search a service or legal issue"
-              className="h-12 min-w-0 flex-1 border border-[#b9b5af] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
+              className="h-12 min-w-0 flex-1 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
             />
             <button type="submit" className="btn btn-primary h-12 shrink-0 px-6">
               Search
