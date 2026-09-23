@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RNK Legalheads website
 
-## Getting Started
+Frontend for the RNK Legalheads full-service law firm website, built from the *RNK Legalheads Complete Developer Guide* (v1.0).
 
-First, run the development server:
+- **Live site:** https://rnk-legalheads.onrender.com/
+- **Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS 4
+- **Hosting:** Render web service
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Other commands: `npm run build` (production build), `npm run start` (serve the build), `npm run lint`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Draft review mode
 
-## Learn More
+All content starts unapproved (`approved: false`), as the guide requires. On the public site, unapproved services, industries, profiles, publications and newsletter issues stay hidden and pages show honest empty states.
 
-To learn more about Next.js, take a look at the following resources:
+To review the full draft catalogue and the labelled layout previews, set:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+SHOW_DRAFT_CONTENT=true
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Locally:** in `.env.local` (not committed).
+- **On Render:** Dashboard → service → **Environment** → add the variable, then **Save, rebuild, and deploy** (a rebuild is required because pages are generated at build time).
 
-## Deploy on Vercel
+Remove the variable (or set it to `false`) for the real public launch, and approve content record by record instead.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Preview links for the email-link screens
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+These screens are normally reached only from a verified link in an email. In draft review mode they can be previewed; each is labelled "Preview state" and changes nothing. On the public site these links show the normal screens instead.
+
+| Screen | Guide ref | Preview link |
+| --- | --- | --- |
+| Subscription confirmed | L05 | https://rnk-legalheads.onrender.com/subscribe/confirm?preview=confirmed |
+| Newsletter preferences | L06 | https://rnk-legalheads.onrender.com/preferences?preview=preferences |
+| Unsubscribed | L07 | https://rnk-legalheads.onrender.com/unsubscribe?preview=unsubscribed |
+
+Requires `SHOW_DRAFT_CONTENT=true` on Render.
+
+## Backend status
+
+The contact and newsletter forms are frontend only. They post to `/api/contact`, `/api/subscribe`, `/api/preferences` and `/api/unsubscribe`, which are not built yet, so they show an honest "could not be sent" message and never report a false success.
