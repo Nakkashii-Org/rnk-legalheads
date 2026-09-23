@@ -9,8 +9,13 @@ import { primaryNav } from "@/lib/content/site";
 
 export type HeaderGroup = { name: string; href: string };
 
+// Sections whose pages live under more than one path (the mockups mark Insights on all of these).
+const sectionPaths: Record<string, string[]> = {
+  "/insights": ["/insights", "/articles", "/recent-judgments", "/legal-updates", "/newsletters"],
+};
+
 function isActive(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return (sectionPaths[href] ?? [href]).some((path) => pathname === path || pathname.startsWith(`${path}/`));
 }
 
 export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {

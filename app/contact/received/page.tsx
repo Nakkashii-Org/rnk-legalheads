@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Arrow from "@/components/ui/Arrow";
+import StatusPanel from "@/components/ui/StatusPanel";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -21,23 +22,21 @@ export default async function ContactReceivedPage({ searchParams }: { searchPara
   if (!reference || !REFERENCE_PATTERN.test(reference)) redirect("/contact");
 
   return (
-    <section className="shell py-16 md:py-24">
-      <div className="mx-auto max-w-[640px] border border-line bg-warm px-6 py-10 md:px-12 md:py-14">
-        <span aria-hidden="true" className="block h-[2px] w-8 bg-rnk" />
-        <h1 className="mt-6 font-serif text-[32px] leading-[40px] md:text-[40px] md:leading-[48px]">
-          Your enquiry has been received
-        </h1>
-        <p className="mt-4 text-muted">
-          This confirms receipt only and does not mean that RNK Legalheads has accepted instructions. Please do not send
-          confidential documents until the firm confirms how they should be shared.
-        </p>
-        <p className="mt-4 text-[14px]">
-          Reference: <strong className="tabular-nums">{reference}</strong>
-        </p>
-        <Link href="/services" className="btn btn-primary mt-8">
+    <StatusPanel
+      title="Your enquiry has been received"
+      actions={
+        <Link href="/services" className="btn btn-primary">
           Return to services <Arrow />
         </Link>
-      </div>
-    </section>
+      }
+    >
+      <p>
+        This confirms receipt only and does not mean that RNK Legalheads has accepted instructions. Please do not send
+        confidential documents until the firm confirms how they should be shared.
+      </p>
+      <p className="text-[14px] text-charcoal">
+        Reference: <strong className="tabular-nums">{reference}</strong>
+      </p>
+    </StatusPanel>
   );
 }

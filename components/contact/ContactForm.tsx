@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import ErrorSummary from "@/components/forms/ErrorSummary";
 import Arrow from "@/components/ui/Arrow";
 import {
   GENERAL_ENQUIRY,
@@ -118,22 +119,7 @@ export default function ContactForm({
 
   return (
     <form onSubmit={onSubmit} noValidate aria-label="Contact RNK Legalheads" className="space-y-6">
-      {errorList.length > 0 && (
-        <div ref={summaryRef} tabIndex={-1} role="alert" aria-labelledby="error-summary-title" className="border-2 border-action px-5 py-4 focus:outline-offset-4">
-          <h2 id="error-summary-title" className="text-[16px] font-bold">
-            There is a problem
-          </h2>
-          <ul className="mt-2 space-y-1 text-[14px]">
-            {errorList.map((key) => (
-              <li key={key}>
-                <a href={`#${key}`} className="text-action underline underline-offset-4">
-                  {errors[key]}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ErrorSummary ref={summaryRef} errors={errorList.map((key) => ({ field: key, message: errors[key]! }))} />
 
       {context && (
         <p className="bg-warm px-4 py-3 text-[14px]">

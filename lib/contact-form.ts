@@ -20,7 +20,7 @@ export const GENERAL_ENQUIRY = "general-enquiry";
 export const NOT_SURE = "not-sure";
 
 // Syntax check only; it does not prove the mailbox exists (guide p.136).
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Line breaks in single-line fields are rejected to prevent email header injection.
 const LINE_BREAK = /[\r\n]/;
 

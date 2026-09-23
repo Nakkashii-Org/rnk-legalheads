@@ -4,6 +4,7 @@ import Link from "next/link";
 import Arrow from "@/components/ui/Arrow";
 import Highlight from "@/components/ui/Highlight";
 import PageHero from "@/components/ui/PageHero";
+import { getPublicIssues } from "@/lib/content/newsletters";
 import { getPublicPeople, personSearchText } from "@/lib/content/people";
 import {
   getPublicPublications,
@@ -56,15 +57,27 @@ function runSearch(query: string): Group[] {
     .filter((p) => matchesAll(personSearchText(p), words))
     .map((p) => ({ key: p.slug, label: `Person / ${p.role}`, title: p.name, excerpt: p.practiceSummary, href: `/people/${p.slug}` }));
 
-  const insights: Result[] = getPublicPublications()
-    .filter((p) => matchesAll(publicationSearchText(p), words))
-    .map((p) => ({
-      key: `${p.type}-${p.slug}`,
-      label: `${publicationTypeMeta[p.type].label}${p.preview ? " / Layout preview" : ""}`,
-      title: p.title,
-      excerpt: p.summary,
-      href: publicationHref(p),
-    }));
+  const insights: Result[] = [
+    ...getPublicPublications()
+      .filter((p) => matchesAll(publicationSearchText(p), words))
+      .map((p) => ({
+        key: `${p.type}-${p.slug}`,
+        label: `${publicationTypeMeta[p.type].label}${p.preview ? " / Layout preview" : ""}`,
+        title: p.title,
+        excerpt: p.summary,
+        href: publicationHref(p),
+      })),
+    // Newsletter issues are searchable too (guide p.23).
+    ...getPublicIssues()
+      .filter((issue) => matchesAll(`${issue.title} ${issue.focus} ${issue.introduction} ${issue.contents.join(" ")}`, words))
+      .map((issue) => ({
+        key: `issue-${issue.slug}`,
+        label: `Newsletter issue${issue.preview ? " / Layout preview" : ""}`,
+        title: issue.title,
+        excerpt: issue.introduction,
+        href: `/newsletters/${issue.slug}`,
+      })),
+  ];
 
   return [
     { id: "services", heading: "Services", results: services },
