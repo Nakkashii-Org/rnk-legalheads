@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import ServiceCard from "@/components/services/ServiceCard";
 import Arrow from "@/components/ui/Arrow";
+import ContactCta from "@/components/ui/ContactCta";
+import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import { serviceDetails } from "@/lib/content/service-details";
 import { getPublicService, getPublicServices, getServiceGroup } from "@/lib/content/services";
@@ -55,11 +57,11 @@ export default async function ServicePage({ params }: { params: Params }) {
         lead={service.summary}
       >
         {!service.approved && (
-          <p className="mt-6 max-w-[640px] border-l-2 border-rnk bg-canvas px-4 py-3 text-[13px] leading-5 text-muted">
+          <DraftNote className="mt-6">
             {service.hold
               ? "Publication hold: written legal and ethics clearance is required before this page can be published."
               : "Draft: awaiting practice-owner and legal approval. Visible only in draft review mode."}
-          </p>
+          </DraftNote>
         )}
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
           <Link href={`/contact?service=${service.slug}`} className="btn btn-primary">
@@ -153,23 +155,7 @@ export default async function ServicePage({ params }: { params: Params }) {
         )}
       </section>
 
-      {/* One restrained contact action with the service pre-selected (guide p.30) */}
-      <section aria-labelledby="contact-title" className="border-t border-line">
-        <div className="shell flex flex-col items-start justify-between gap-6 py-14 md:flex-row md:items-center md:py-16">
-          <div className="max-w-[620px]">
-            <h2 id="contact-title" className="font-serif text-[26px] leading-[34px] md:text-[30px] md:leading-[38px]">
-              Contact the team
-            </h2>
-            <p className="mt-2 text-[15px] leading-[24px] text-muted">
-              Share your contact details and a brief, non-confidential description of the subject. Sending an
-              enquiry does not create a lawyer-client relationship.
-            </p>
-          </div>
-          <Link href={`/contact?service=${service.slug}`} className="btn btn-primary shrink-0">
-            Contact the team <Arrow />
-          </Link>
-        </div>
-      </section>
+      <ContactCta href={`/contact?service=${service.slug}`} />
     </>
   );
 }

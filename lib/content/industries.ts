@@ -7,12 +7,24 @@ export type Industry = {
   serviceIds: string[];
   /** A sector page is published only once its lawyer-approved detail exists (guide p.113, p.115). */
   approved: boolean;
+  /** Hero copy where the guide supplies it (I02). */
+  intro?: string;
+  /** 90–140 word overview and four work areas: supplied by the sector owner, never invented (p.115). */
+  overview?: string;
+  workAreas?: { title: string; text: string }[];
 };
 
 export const industries: Industry[] = [
   { slug: "technology-digital-business", name: "Technology & Digital Business", summary: "Legal work for technology businesses, digital services and data-led operations.", serviceIds: ["S01", "S03", "S26", "S28", "S30"], approved: false },
   { slug: "financial-services-fintech", name: "Financial Services & FinTech", summary: "Regulation, transactions, financing and dispute issues for financial-service businesses.", serviceIds: ["S04", "S05", "S06", "S14", "S28", "S34"], approved: false },
-  { slug: "real-estate-construction", name: "Real Estate & Construction", summary: "Property transactions, development, construction, finance and related disputes.", serviceIds: ["S22", "S23", "S04", "S19", "S10"], approved: false },
+  {
+    slug: "real-estate-construction",
+    name: "Real Estate & Construction",
+    summary: "Property transactions, development, construction, finance and related disputes.",
+    intro: "Legal work for property, development and construction. Our work brings together title, transactions, project contracts, financing, tax and dispute issues.",
+    serviceIds: ["S22", "S23", "S04", "S19", "S10"],
+    approved: false,
+  },
   { slug: "energy-infrastructure", name: "Energy & Infrastructure", summary: "Project development, commercial arrangements, regulation and dispute issues.", serviceIds: ["S23", "S24", "S25", "S04", "S10"], approved: false },
   { slug: "manufacturing-industrials", name: "Manufacturing & Industrials", summary: "Supply chains, facilities, workforce, trade, contracts and dispute matters.", serviceIds: ["S01", "S20", "S25", "S26", "S30"], approved: false },
   { slug: "consumer-retail", name: "Consumer & Retail", summary: "Product, distribution, advertising, consumer and digital-commerce questions.", serviceIds: ["S01", "S19", "S26", "S28", "S33"], approved: false },
@@ -33,6 +45,14 @@ const homeOrder = [
   "consumer-retail",
   "manufacturing-industrials",
 ];
+
+export function getPublicIndustry(slug: string): Industry | undefined {
+  return industries.find((industry) => industry.slug === slug && isPublic(industry));
+}
+
+export function getPublicIndustries(): Industry[] {
+  return industries.filter(isPublic);
+}
 
 export function getHomeIndustries(): Industry[] {
   return homeOrder
