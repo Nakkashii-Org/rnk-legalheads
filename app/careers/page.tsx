@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import ApplicationForm from "@/components/careers/ApplicationForm";
+import ApplicationNotes from "@/components/careers/ApplicationNotes";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
+import { GENERAL_POSITIONS } from "@/lib/career-form";
 import { getOpenJobs } from "@/lib/content/jobs";
 
 const LEAD =
@@ -15,6 +18,11 @@ export const metadata: Metadata = {
 
 export default function CareersPage() {
   const jobs = getOpenJobs();
+  // Real open roles first, then the general positions. Layout previews are never applied for.
+  const positions = [
+    ...jobs.filter((job) => !job.preview).map((job) => ({ value: job.slug, label: `${job.title} (${job.jobId})` })),
+    ...GENERAL_POSITIONS,
+  ];
 
   return (
     <>
@@ -32,7 +40,11 @@ export default function CareersPage() {
 
         {jobs.length === 0 ? (
           <p className="mt-6 max-w-[620px] border-t border-line pt-6 text-muted">
-            There are no current vacancies listed. Please check this page for future opportunities.
+            There are no current vacancies listed. Please check this page for future opportunities, or{" "}
+            <a href="#apply" className="text-charcoal underline underline-offset-4 hover:text-action">
+              send us your CV
+            </a>
+            .
           </p>
         ) : (
           <ul className="mt-8">
@@ -55,6 +67,24 @@ export default function CareersPage() {
             ))}
           </ul>
         )}
+      </section>
+
+      <section id="apply" aria-labelledby="apply-title" className="scroll-mt-24 border-t border-line bg-canvas">
+        <div className="shell grid grid-cols-1 gap-12 py-14 md:py-20 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16">
+          <div>
+            <h2 id="apply-title" className="section-title">
+              Send us your CV
+            </h2>
+            <p className="mt-4 max-w-[620px] text-muted">
+              Interested in joining RNK Legalheads? Share your details and resume. We will contact you if a suitable
+              opportunity arises.
+            </p>
+            <div className="mt-10">
+              <ApplicationForm positions={positions} />
+            </div>
+          </div>
+          <ApplicationNotes />
+        </div>
       </section>
     </>
   );

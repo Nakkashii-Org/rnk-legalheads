@@ -6,12 +6,13 @@ const tabs = [
   { label: "Recent judgments", href: "/recent-judgments" },
   { label: "Legal updates", href: "/legal-updates" },
   { label: "Newsletters", href: "/newsletters" },
+  { label: "Careers", href: "/careers" },
 ];
 
 /** Type navigation shared by the Insights hub and each publication listing (K01). */
 export default function InsightsTabs({ current }: { current: string }) {
   return (
-    <nav aria-label="Publication types" className="-mx-[var(--gutter)] overflow-x-auto px-[var(--gutter)] md:mx-0 md:px-0">
+    <nav aria-label="Insights sections" className="-mx-[var(--gutter)] overflow-x-auto px-[var(--gutter)] md:mx-0 md:px-0">
       <ul className="flex gap-7 whitespace-nowrap border-b border-line">
         {tabs.map((tab) => {
           const active = tab.href === current;

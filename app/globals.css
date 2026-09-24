@@ -104,6 +104,8 @@ html {
   input[type="checkbox"],
   input[type="radio"],
   input[type="submit"],
+  input[type="file"],
+  input[type="file"]::file-selector-button,
   input[type="checkbox"] ~ label,
   label:has(> input[type="checkbox"]) {
     cursor: pointer;

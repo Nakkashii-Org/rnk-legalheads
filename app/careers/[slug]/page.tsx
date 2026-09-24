@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import ApplicationForm from "@/components/careers/ApplicationForm";
+import ApplicationNotes from "@/components/careers/ApplicationNotes";
 import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
@@ -72,14 +73,14 @@ export default async function JobPage({ params }: { params: Params }) {
         {job.preview && <DraftNote className="mt-6">Vacancy layout only. Publish only real open roles with a job ID and application instructions.</DraftNote>}
         {open ? (
           <a href="#how-to-apply" className="btn btn-primary mt-8">
-            Application instructions <Arrow />
+            Apply now <Arrow />
           </a>
         ) : (
           <p className="mt-8 font-bold">This vacancy is closed and no longer accepting applications.</p>
         )}
       </PageHero>
 
-      <section aria-labelledby="role-title" className="shell grid gap-10 py-14 md:grid-cols-[1fr_320px] md:gap-16 md:py-20">
+      <section aria-labelledby="role-title" className="shell grid gap-10 py-14 grid-cols-1 md:grid-cols-[minmax(0,1fr)_320px] md:gap-16 md:py-20">
         <div>
           <h2 id="role-title" className="section-title">
             The role
@@ -98,37 +99,27 @@ export default async function JobPage({ params }: { params: Params }) {
           </ul>
 
           {open && (
-            <div id="how-to-apply" className="mt-12">
-              <h2 className="section-title">How to apply</h2>
+            <div id="how-to-apply" className="mt-12 scroll-mt-24">
+              <h2 className="section-title">Apply for this role</h2>
               <p className="mt-4 text-muted">{job.applicationInstructions}</p>
-              {job.applicationEmail && (
-                <a
-                  href={`mailto:${job.applicationEmail}?subject=${encodeURIComponent(`Application: ${job.title} (${job.jobId})`)}`}
-                  className="link-action mt-3"
-                >
-                  {job.applicationEmail} <Arrow />
-                </a>
-              )}
-              <p className="mt-4 text-[14px] leading-[22px] text-muted">
-                Please do not send identity documents or financial information at this stage. Information you
-                provide is used for recruitment only, as described in our{" "}
-                <Link href="/privacy-policy" className="underline underline-offset-4">
-                  privacy notice
-                </Link>
-                .
-              </p>
+              <div className="mt-10">
+                <ApplicationForm positions={[]} lockedPosition={{ value: job.slug, label: `${job.title} (${job.jobId})` }} />
+              </div>
             </div>
           )}
         </div>
 
-        <dl className="h-fit bg-warm px-6 py-5 text-[14px] leading-[22px]">
-          {facts.map((fact) => (
-            <div key={fact.label} className="grid grid-cols-[120px_1fr] gap-4 border-b border-line py-2 last:border-b-0">
-              <dt className="text-muted">{fact.label}</dt>
-              <dd>{fact.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="space-y-6">
+          <dl className="h-fit bg-warm px-6 py-5 text-[14px] leading-[22px]">
+            {facts.map((fact) => (
+              <div key={fact.label} className="grid grid-cols-[120px_1fr] gap-4 border-b border-line py-2 last:border-b-0">
+                <dt className="text-muted">{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))}
+          </dl>
+          {open && <ApplicationNotes />}
+        </div>
       </section>
     </>
   );
