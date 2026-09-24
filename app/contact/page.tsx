@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactForm, { type EnquiryContext } from "@/components/contact/ContactForm";
+import OfficeMap from "@/components/contact/OfficeMap";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import { GENERAL_ENQUIRY } from "@/lib/contact-form";
@@ -77,7 +78,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Sear
                           {d.value}
                         </a>
                       ) : (
-                        <span className="whitespace-pre-line">{d.value}</span>
+                        <address className="whitespace-pre-line not-italic">{d.value}</address>
                       )}
                     </dd>
                   </div>
@@ -90,6 +91,11 @@ export default async function ContactPage({ searchParams }: { searchParams: Sear
               </DraftNote>
             ) : (
               <p className="mt-4 text-[15px] text-muted">Office contact details will be published here once verified.</p>
+            )}
+            {contactDetails.mapQuery && (
+              <div className="mt-6">
+                <OfficeMap query={contactDetails.mapQuery} />
+              </div>
             )}
           </section>
 

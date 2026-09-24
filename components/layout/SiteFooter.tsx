@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Logo from "@/components/layout/Logo";
-import { footerColumns, legalLinks, site } from "@/lib/content/site";
+import { contactDetails, footerColumns, legalLinks, site } from "@/lib/content/site";
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
@@ -11,6 +11,19 @@ export default function SiteFooter() {
         <div>
           <Logo />
           <p className="mt-4 max-w-[220px] text-[13px] leading-[20px] text-muted">{site.statement}</p>
+          {contactDetails.address && (
+            <address className="mt-5 whitespace-pre-line text-[13px] not-italic leading-[20px] text-muted">
+              {contactDetails.address}
+            </address>
+          )}
+          {contactDetails.email && (
+            <a
+              href={`mailto:${contactDetails.email}`}
+              className="mt-2 inline-flex min-h-11 items-center text-[13px] text-charcoal underline underline-offset-4 hover:text-action md:min-h-9"
+            >
+              {contactDetails.email}
+            </a>
+          )}
         </div>
         {footerColumns.map((column) => (
           <nav key={column.heading} aria-label={column.heading}>

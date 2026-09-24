@@ -7,10 +7,20 @@ export const site = {
 };
 
 /**
- * Office contact facts. The office administrator must supply and verify these (guide p.136);
- * placeholder addresses or unmonitored mailboxes must never go live. Leave undefined until verified.
+ * Office contact facts, supplied by the firm (guide p.136). Placeholder addresses or unmonitored
+ * mailboxes must never go live; leave a field undefined until it is verified.
  */
-export const contactDetails: { address?: string; phone?: string; email?: string } = {};
+export const contactDetails: {
+  address?: string;
+  phone?: string;
+  email?: string;
+  /** Search text for the Google Maps embed and "Open in Google Maps" link. */
+  mapQuery?: string;
+} = {
+  address: "RNK Legalheads LLP\nThird Floor, Plot Number 94, Pocket 10\nSector 13, Dwarka\nNew Delhi 110078",
+  email: "contact@rnklegalheads.com",
+  mapQuery: "Plot Number 94, Pocket 10, Sector 13, Dwarka, New Delhi 110078",
+};
 
 export type NavLink = { label: string; href: string };
 
