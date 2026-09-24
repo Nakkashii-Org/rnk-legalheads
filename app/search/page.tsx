@@ -145,7 +145,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                     href={typeHref(t.id)}
                     scroll={false}
                     aria-current={active ? "true" : undefined}
-                    className={`inline-flex min-h-9 items-center border px-3 text-[12px] ${
+                    className={`inline-flex min-h-11 items-center border px-4 text-[13px] md:min-h-9 md:px-3 md:text-[12px] ${
                       active ? "border-charcoal bg-charcoal text-white" : "border-[#8a8782] bg-canvas hover:border-charcoal"
                     }`}
                   >

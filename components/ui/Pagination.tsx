@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Arrow from "@/components/ui/Arrow";
 
 /** Crawlable previous/next links that keep the current filters (guide p.120). */
 export default function Pagination({ page, pageCount, hrefFor }: { page: number; pageCount: number; hrefFor: (page: number) => string }) {
@@ -7,7 +8,7 @@ export default function Pagination({ page, pageCount, hrefFor }: { page: number;
     <nav aria-label="Pagination" className="mt-10 flex items-center justify-between gap-4 border-t border-line pt-6 text-[14px]">
       {page > 1 ? (
         <Link href={hrefFor(page - 1)} className="link-action" rel="prev">
-          ← Previous
+          <Arrow direction="left" /> Previous
         </Link>
       ) : (
         <span />
@@ -17,7 +18,7 @@ export default function Pagination({ page, pageCount, hrefFor }: { page: number;
       </span>
       {page < pageCount ? (
         <Link href={hrefFor(page + 1)} className="link-action" rel="next">
-          Next →
+          Next <Arrow direction="right" />
         </Link>
       ) : (
         <span />

@@ -64,6 +64,23 @@ body {
   scroll-margin-top: calc(var(--header-height) + 16px);
 }
 
+/*
+ * iOS Safari zooms the page when a field with text below 16px is focused. Unlayered, so it
+ * overrides the Tailwind size utilities on small screens only.
+ */
+@media (max-width: 767px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

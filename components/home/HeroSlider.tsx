@@ -208,7 +208,7 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               aria-label="Previous slide"
               className="ml-1 inline-flex h-11 w-11 items-center justify-center text-muted hover:text-charcoal"
             >
-              <span aria-hidden="true">←</span>
+              <Arrow direction="left" className="h-4 w-4" />
             </button>
             <button
               type="button"
@@ -216,7 +216,7 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               aria-label="Next slide"
               className="inline-flex h-11 w-11 items-center justify-center text-muted hover:text-charcoal"
             >
-              <span aria-hidden="true">→</span>
+              <Arrow direction="right" className="h-4 w-4" />
             </button>
           </div>
         </div>

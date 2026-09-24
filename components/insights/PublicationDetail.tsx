@@ -223,7 +223,7 @@ export default function PublicationDetail({ publication: p }: { publication: Pub
                 <ul className="mt-2">
                   {services.map((s) => (
                     <li key={s.id}>
-                      <Link href={`/services/${s.slug}`} className="inline-flex min-h-9 items-center gap-1.5 text-[13px] hover:text-action">
+                      <Link href={`/services/${s.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-[13px] hover:text-action lg:min-h-9">
                         {s.title} <Arrow />
                       </Link>
                     </li>

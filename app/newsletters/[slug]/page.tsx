@@ -92,14 +92,14 @@ export default async function NewsletterIssuePage({ params }: { params: Params }
         <nav aria-label="Other issues" className="shell flex justify-between gap-6 border-t border-line py-8 text-[14px]">
           {older ? (
             <Link href={`/newsletters/${older.slug}`} className="link-action" rel="prev">
-              ← {older.title}
+              <Arrow direction="left" /> {older.title}
             </Link>
           ) : (
             <span />
           )}
           {newer ? (
             <Link href={`/newsletters/${newer.slug}`} className="link-action text-right" rel="next">
-              {newer.title} →
+              {newer.title} <Arrow direction="right" />
             </Link>
           ) : (
             <span />

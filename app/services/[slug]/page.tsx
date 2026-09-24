@@ -58,11 +58,9 @@ export default async function ServicePage({ params }: { params: Params }) {
         title={service.title}
         lead={service.summary}
       >
-        {!service.approved && (
+        {service.hold && (
           <DraftNote className="mt-6">
-            {service.hold
-              ? "Publication hold: written legal and ethics clearance is required before this page can be published."
-              : "Draft: awaiting practice-owner and legal approval. Visible only in draft review mode."}
+            Publication hold: written legal and ethics clearance is required before this page can be published.
           </DraftNote>
         )}
         <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
