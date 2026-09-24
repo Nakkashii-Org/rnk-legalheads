@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import NewsletterBand from "@/components/layout/NewsletterBand";
+import SiteChrome from "@/components/layout/SiteChrome";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
 import { getPublicGroups, groupHref } from "@/lib/content/services";
@@ -27,12 +28,17 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           Skip to main content
         </a>
-        <SiteHeader groups={headerGroups} />
-        <main id="main" className="flex-1">
+        <SiteChrome
+          header={<SiteHeader groups={headerGroups} />}
+          footer={
+            <>
+              <NewsletterBand />
+              <SiteFooter />
+            </>
+          }
+        >
           {children}
-        </main>
-        <NewsletterBand />
-        <SiteFooter />
+        </SiteChrome>
       </body>
     </html>
   );
