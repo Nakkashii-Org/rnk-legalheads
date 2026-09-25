@@ -5,6 +5,7 @@ import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import StatusPanel from "@/components/ui/StatusPanel";
+import { backendGet } from "@/lib/backend";
 import { previewState, readToken, tokenPageMetadata } from "@/lib/token-pages";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -22,9 +23,35 @@ export default async function PreferencesPage({ searchParams }: { searchParams: 
   const preview = previewState(params, ["preferences"]);
   const token = readToken(params);
 
-  if (preview || token) {
-    // With the backend, the server exchanges the token for the saved topics; unverifiable tokens get L08.
-    if (!preview) return <LinkExpired />;
+  if (token && !preview) {
+    // The backend swaps the signed link for the subscriber's saved topics; unverifiable links get L08.
+    const result = await backendGet<{ topics: string[] }>(`/api/preferences?token=${encodeURIComponent(token)}`);
+    if (!result.ok) {
+      if (result.status === 410) return <LinkExpired />;
+      return (
+        <StatusPanel title="Preferences are temporarily unavailable">
+          <p>We could not load your preferences just now. Nothing has changed. Please try the link again later.</p>
+        </StatusPanel>
+      );
+    }
+    return (
+      <>
+        <PageHero
+          breadcrumb={[{ label: "Home", href: "/" }, { label: "Newsletter preferences" }]}
+          eyebrow="Email subscriptions"
+          title="Your newsletter preferences"
+          lead="Choose the topics you wish to receive, or unsubscribe from all newsletters."
+        />
+        <div className="shell py-12 md:py-16">
+          <div className="max-w-[720px]">
+            <PreferencesForm token={token} initialTopics={result.data.topics} />
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (preview) {
     return (
       <>
         <PageHero

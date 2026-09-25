@@ -32,6 +32,16 @@ SHOW_DRAFT_CONTENT=true
 
 Remove the variable (or set it to `false`) for the real public launch, and approve content record by record instead.
 
+## Backend connection
+
+The forms post to `/api/*` on the website, and `next.config.ts` forwards those requests to **rnk-legalhead-backend**. Set:
+
+```bash
+BACKEND_URL=http://localhost:4000   # locally; on Render, the backend service URL
+```
+
+The rewrite is fixed at build time, so on Render set `BACKEND_URL` and then **rebuild**. Without it, the forms honestly report "could not be sent". The `/subscribe/confirm` and `/preferences` pages also use `BACKEND_URL` on the server to check email-link tokens.
+
 ## Preview links for the email-link screens
 
 These screens are normally reached only from a verified link in an email. In draft review mode they can be previewed; each is labelled "Preview state" and changes nothing. On the public site these links show the normal screens instead.
