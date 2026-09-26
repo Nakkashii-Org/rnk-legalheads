@@ -5,20 +5,19 @@ import Arrow from "@/components/ui/Arrow";
 import ContactCta from "@/components/ui/ContactCta";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicIndustries, getPublicIndustry } from "@/lib/content/industries";
-import { getPublicServices } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
 // Only approved sector pages exist; unfinished sectors are a 404 (guide p.115).
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return getPublicIndustries().map((industry) => ({ slug: industry.slug }));
+export async function generateStaticParams() {
+  return (await getContent()).publicIndustries().map((industry) => ({ slug: industry.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const industry = getPublicIndustry((await params).slug);
+  const industry = (await getContent()).publicIndustry((await params).slug);
   if (!industry) return {};
   return {
     title: industry.name,
@@ -28,10 +27,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function IndustryPage({ params }: { params: Params }) {
-  const industry = getPublicIndustry((await params).slug);
+  const content = await getContent();
+  const industry = content.publicIndustry((await params).slug);
   if (!industry) notFound();
 
-  const publicServices = getPublicServices();
+  const publicServices = content.publicServices();
   const related = industry.serviceIds
     .map((id) => publicServices.find((service) => service.id === id))
     .filter((service) => service !== undefined);

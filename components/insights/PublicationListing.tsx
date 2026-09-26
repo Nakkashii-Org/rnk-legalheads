@@ -8,11 +8,10 @@ import PageHero from "@/components/ui/PageHero";
 import type { Crumb } from "@/components/ui/Breadcrumb";
 import {
   filterPublications,
-  getPublicPublications,
   type Publication,
   type PublicationType,
 } from "@/lib/content/publications";
-import { getPublicServices } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 import { MAX_QUERY_LENGTH } from "@/lib/search";
 
 export type RawParams = Record<string, string | string[] | undefined>;
@@ -48,9 +47,10 @@ function yearsOf(list: Publication[]): string[] {
   return [...new Set(list.map((p) => p.publishedAt?.slice(0, 4)).filter((y): y is string => Boolean(y)))].sort().reverse();
 }
 
-export default function PublicationListing({ basePath, type, title, lead, breadcrumb, emptyText, params }: ListingProps) {
-  const all = getPublicPublications(type);
-  const services = getPublicServices();
+export default async function PublicationListing({ basePath, type, title, lead, breadcrumb, emptyText, params }: ListingProps) {
+  const content = await getContent();
+  const all = content.publicPublications(type);
+  const services = content.publicServices();
 
   const query = first(params.q).trim().slice(0, MAX_QUERY_LENGTH);
   const service = services.find((s) => s.slug === first(params.service));
@@ -64,7 +64,7 @@ export default function PublicationListing({ basePath, type, title, lead, breadc
   const year = years.includes(first(params.year)) ? first(params.year) : undefined;
   const court = courts.includes(first(params.court)) ? first(params.court) : undefined;
 
-  const results = filterPublications(all, { query, serviceId: service?.id, year, court });
+  const results = filterPublications(all, { query, serviceId: service?.id, year, court }, services);
   const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const page = Math.min(Math.max(1, Number.parseInt(first(params.page), 10) || 1), pageCount);
   const pageItems = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);

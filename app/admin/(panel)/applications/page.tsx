@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import EmptyTable from "@/components/admin/EmptyTable";
 import { GENERAL_POSITIONS } from "@/lib/career-form";
-import { getOpenJobs } from "@/lib/content/jobs";
+import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Job applications" };
 
 const select = "mt-1 block h-11 max-w-full border border-[#8a8782] bg-canvas px-3 text-[14px] focus:border-charcoal";
 
-export default function ApplicationsPage() {
-  const positions = [...getOpenJobs().filter((j) => !j.preview).map((j) => ({ value: j.slug, label: j.title })), ...GENERAL_POSITIONS];
+export default async function ApplicationsPage() {
+  const positions = [...(await getContent()).openJobs().filter((j) => !j.preview).map((j) => ({ value: j.slug, label: j.title })), ...GENERAL_POSITIONS];
 
   return (
     <div className="space-y-6">

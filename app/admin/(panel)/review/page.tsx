@@ -5,6 +5,7 @@ import EmptyState from "@/components/admin/EmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { contentTypes, type WorkflowStatus } from "@/lib/admin/config";
 import { listRecords } from "@/lib/admin/records";
+import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Review queue" };
 
@@ -20,7 +21,8 @@ const tabs: { key: string; label: string; status: WorkflowStatus; empty: string 
 export default async function ReviewQueuePage({ searchParams }: { searchParams: SearchParams }) {
   const raw = (await searchParams).tab;
   const current = tabs.find((t) => t.key === (Array.isArray(raw) ? raw[0] : raw)) ?? tabs[0];
-  const records = contentTypes.flatMap((t) => listRecords(t.key));
+  const content = await getContent();
+  const records = contentTypes.flatMap((t) => listRecords(content, t.key));
   const rows = records.filter((r) => r.status === current.status);
 
   return (

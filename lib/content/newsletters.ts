@@ -1,5 +1,4 @@
-import { getPublicPublication, type Publication, type PublicationType } from "@/lib/content/publications";
-import { showDrafts } from "@/lib/visibility";
+import type { PublicationType } from "@/lib/content/publications";
 
 export type NewsletterIssue = {
   slug: string;
@@ -17,8 +16,8 @@ export type NewsletterIssue = {
   preview?: boolean;
 };
 
-// Approved web issues are added here until the CMS takes over (Step 8). None have been supplied.
-const issues: NewsletterIssue[] = [];
+// Approved web issues come from the CMS. None have been supplied.
+export const issues: NewsletterIssue[] = [];
 
 const PREVIEW_INTRO =
   "A selected collection of approved publications, with a short editorial introduction.";
@@ -29,7 +28,7 @@ const PREVIEW_ITEMS: NewsletterIssue["items"] = [
 ];
 
 // Layout previews from the guide's L01/L02 screens. Draft review mode only.
-const layoutPreviews: NewsletterIssue[] = [
+export const issueLayoutPreviews: NewsletterIssue[] = [
   {
     slug: "rnk-legal-update",
     title: "RNK Legal Update",
@@ -61,20 +60,3 @@ const layoutPreviews: NewsletterIssue[] = [
     preview: true,
   },
 ];
-
-export function getPublicIssues(): NewsletterIssue[] {
-  const approved = issues.filter((issue) => issue.approved);
-  const list = approved.length > 0 || !showDrafts ? approved : [...issues, ...layoutPreviews];
-  return [...list].sort((a, b) => (b.issueDate ?? "").localeCompare(a.issueDate ?? ""));
-}
-
-export function getPublicIssue(slug: string): NewsletterIssue | undefined {
-  return getPublicIssues().find((issue) => issue.slug === slug);
-}
-
-/** Resolves the issue's references; anything unpublished since is left out, never shown as a broken link. */
-export function issuePublications(issue: NewsletterIssue): Publication[] {
-  return issue.items
-    .map((ref) => getPublicPublication(ref.type, ref.slug))
-    .filter((p): p is Publication => p !== undefined);
-}

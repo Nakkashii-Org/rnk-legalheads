@@ -5,6 +5,7 @@ import EmptyState from "@/components/admin/EmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
 import { contentTypes } from "@/lib/admin/config";
 import { listRecords } from "@/lib/admin/records";
+import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -16,8 +17,9 @@ const createActions = [
 ];
 
 /** A02: every number comes from real records; nothing is a hardcoded sample (guide p.141). */
-export default function DashboardPage() {
-  const records = contentTypes.flatMap((t) => listRecords(t.key));
+export default async function DashboardPage() {
+  const content = await getContent();
+  const records = contentTypes.flatMap((t) => listRecords(content, t.key));
   const count = (status: string) => records.filter((r) => r.status === status).length;
   const drafts = records.filter((r) => r.status === "draft");
   const recentDrafts = drafts.filter((r) => ["articles", "judgments", "legal-updates", "newsletters"].includes(r.type)).slice(0, 6);

@@ -8,6 +8,7 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, WORKFLOW_STATUSES, type WorkflowStatus } from "@/lib/admin/config";
 import { listRecords } from "@/lib/admin/records";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ type: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -27,7 +28,7 @@ export default async function ContentListPage({ params, searchParams }: { params
   const statusParam = first(sp.status);
   const status = WORKFLOW_STATUSES.some((s) => s.value === statusParam) ? (statusParam as WorkflowStatus) : undefined;
 
-  const all = listRecords(config.key);
+  const all = listRecords(await getContent(), config.key);
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const rows = all.filter(
     (r) => (!status || r.status === status) && words.every((w) => `${r.title} ${r.id} ${r.detail ?? ""}`.toLowerCase().includes(w)),

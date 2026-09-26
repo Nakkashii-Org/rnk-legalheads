@@ -4,20 +4,22 @@ import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import RecordEditor from "@/components/admin/RecordEditor";
 import { getContentType } from "@/lib/admin/config";
 import { editorOptions, getRecord } from "@/lib/admin/records";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ type: string; id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { type, id } = await params;
   const config = getContentType(type);
-  const found = config && getRecord(config.key, id);
+  const found = config && getRecord(await getContent(), config.key, id);
   return { title: found ? `Edit: ${found.record.title}` : "Not found" };
 }
 
 export default async function EditRecordPage({ params }: { params: Params }) {
   const { type, id } = await params;
   const config = getContentType(type);
-  const found = config && getRecord(config.key, id);
+  const content = await getContent();
+  const found = config && getRecord(content, config.key, id);
   if (!config || !found) notFound();
 
   return (
@@ -34,7 +36,7 @@ export default async function EditRecordPage({ params }: { params: Params }) {
         publicHref={found.record.publicHref}
         layoutPreview={found.record.layoutPreview}
         initialValues={found.values}
-        options={editorOptions()}
+        options={editorOptions(content)}
       />
     </div>
   );

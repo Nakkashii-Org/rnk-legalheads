@@ -3,13 +3,8 @@ import Form from "next/form";
 import Link from "next/link";
 import ServiceCard from "@/components/services/ServiceCard";
 import PageHero from "@/components/ui/PageHero";
-import {
-  filterServices,
-  findGroupByAlias,
-  getPublicGroups,
-  getPublicServices,
-  type ServiceGroup,
-} from "@/lib/content/services";
+import { filterServices, findGroupByAlias, type ServiceGroup } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 import { showDrafts } from "@/lib/visibility";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -47,8 +42,9 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
 
 export default async function ServicesPage({ searchParams }: { searchParams: SearchParams }) {
   const { group, query } = readFilters(await searchParams);
-  const groups = getPublicGroups();
-  const results = filterServices(getPublicServices(), group, query);
+  const content = await getContent();
+  const groups = content.publicGroups();
+  const results = filterServices(content.publicServices(), group, query, content.serviceDetails);
   const filtered = Boolean(group || query);
 
   const tabs = [{ label: "All services", group: undefined as ServiceGroup | undefined }, ...groups.map((g) => ({ label: g.name, group: g }))];

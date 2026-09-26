@@ -7,13 +7,14 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, type Field, type FieldValue, type SourceLink, type WorkArea } from "@/lib/admin/config";
 import { editorOptions, getRecord } from "@/lib/admin/records";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ type: string; id: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { type, id } = await params;
   const config = getContentType(type);
-  const found = config && getRecord(config.key, id);
+  const found = config && getRecord(await getContent(), config.key, id);
   return { title: found ? `Review: ${found.record.title}` : "Not found" };
 }
 
@@ -30,10 +31,11 @@ const plain = (html: string) =>
 export default async function ReviewRecordPage({ params }: { params: Params }) {
   const { type, id } = await params;
   const config = getContentType(type);
-  const found = config && getRecord(config.key, id);
+  const content = await getContent();
+  const found = config && getRecord(content, config.key, id);
   if (!config || !found) notFound();
 
-  const options = editorOptions();
+  const options = editorOptions(content);
   const labelFor = (field: Field, value: string) =>
     field.kind === "services" || field.kind === "people" || field.kind === "publications"
       ? (options[field.kind].find((o) => o.value === value)?.label ?? value)

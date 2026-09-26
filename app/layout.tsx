@@ -3,7 +3,8 @@ import NewsletterBand from "@/components/layout/NewsletterBand";
 import SiteChrome from "@/components/layout/SiteChrome";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
-import { getPublicGroups, groupHref } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
+import { groupHref } from "@/lib/content/services";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,8 +17,12 @@ export const metadata: Metadata = {
     "RNK Legalheads is a full-service law firm established in 2024, advising businesses, institutions and individuals on transactions, disputes, taxation, regulation and private matters.",
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const headerGroups = getPublicGroups().map((group) => ({ name: group.name, href: groupHref(group) }));
+// Pages are rebuilt in the background at most every 5 minutes, so content changes appear without a redeploy.
+export const revalidate = 300;
+
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const content = await getContent();
+  const headerGroups = content.publicGroups().map((group) => ({ name: group.name, href: groupHref(group) }));
 
   return (
     <html lang="en">

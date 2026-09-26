@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import SettingsForm from "@/components/admin/SettingsForm";
-import { contactDetails, footerColumns, legalLinks, primaryNav, site } from "@/lib/content/site";
+import { footerColumns, legalLinks, primaryNav } from "@/lib/content/site";
+import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Site settings" };
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const { site, contactDetails } = await getContent();
   const navigation = [
     { area: "Main menu", links: primaryNav },
     ...footerColumns.map((c) => ({ area: `Footer: ${c.heading}`, links: c.links })),
@@ -22,7 +24,7 @@ export default function SettingsPage() {
       <SettingsForm
         initial={{
           brandName: site.name,
-          legalEntity: "RNK Legalheads LLP",
+          legalEntity: site.legalEntity ?? "",
           established: String(site.established),
           domain: "",
           statement: site.statement,

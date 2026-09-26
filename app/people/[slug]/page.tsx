@@ -5,19 +5,18 @@ import Portrait from "@/components/people/Portrait";
 import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicPeople, getPublicPerson } from "@/lib/content/people";
-import { getPublicServices } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return getPublicPeople().map((person) => ({ slug: person.slug }));
+export async function generateStaticParams() {
+  return (await getContent()).publicPeople().map((person) => ({ slug: person.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const person = getPublicPerson((await params).slug);
+  const person = (await getContent()).publicPerson((await params).slug);
   if (!person) return {};
   return {
     title: person.name,
@@ -28,10 +27,11 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function PersonPage({ params }: { params: Params }) {
-  const person = getPublicPerson((await params).slug);
+  const content = await getContent();
+  const person = content.publicPerson((await params).slug);
   if (!person) notFound();
 
-  const services = getPublicServices().filter((service) => person.serviceIds.includes(service.id));
+  const services = content.publicServices().filter((service) => person.serviceIds.includes(service.id));
   const facts = [
     { label: "Qualifications", value: person.qualifications },
     { label: "Enrolment", value: person.enrolment },

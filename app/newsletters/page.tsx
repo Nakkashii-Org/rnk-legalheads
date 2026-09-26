@@ -3,7 +3,7 @@ import Form from "next/form";
 import Link from "next/link";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicIssues } from "@/lib/content/newsletters";
+import { getContent } from "@/lib/content/source";
 import { formatDate } from "@/lib/content/publications";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -22,7 +22,7 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
 }
 
 export default async function NewslettersPage({ searchParams }: { searchParams: SearchParams }) {
-  const all = getPublicIssues();
+  const all = (await getContent()).publicIssues();
   const years = [...new Set(all.map((i) => i.issueDate?.slice(0, 4)).filter((y): y is string => Boolean(y)))].sort().reverse();
   const raw = (await searchParams).year;
   const requested = Array.isArray(raw) ? raw[0] : raw;

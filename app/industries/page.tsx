@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
-import { industries } from "@/lib/content/industries";
-import { getPublicServices } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 import { isPublic } from "@/lib/visibility";
 
 const LEAD =
@@ -15,8 +14,10 @@ export const metadata: Metadata = {
   alternates: { canonical: "/industries" },
 };
 
-export default function IndustriesPage() {
-  const publicServices = getPublicServices();
+export default async function IndustriesPage() {
+  const content = await getContent();
+  const industries = content.allIndustries();
+  const publicServices = content.publicServices();
 
   return (
     <>

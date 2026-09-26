@@ -1,8 +1,10 @@
 import Link from "next/link";
 import Logo from "@/components/layout/Logo";
-import { contactDetails, footerColumns, legalLinks, site } from "@/lib/content/site";
+import { footerColumns, legalLinks } from "@/lib/content/site";
+import { getContent } from "@/lib/content/source";
 
-export default function SiteFooter() {
+export default async function SiteFooter() {
+  const { site, contactDetails } = await getContent();
   const year = new Date().getFullYear();
 
   return (

@@ -4,10 +4,7 @@ import OfficeMap from "@/components/contact/OfficeMap";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import { GENERAL_ENQUIRY } from "@/lib/contact-form";
-import { getPublicIndustry } from "@/lib/content/industries";
-import { getPublicPerson } from "@/lib/content/people";
-import { getPublicServices } from "@/lib/content/services";
-import { contactDetails } from "@/lib/content/site";
+import { getContent } from "@/lib/content/source";
 import { showDrafts } from "@/lib/visibility";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -26,14 +23,16 @@ export const metadata: Metadata = {
 
 export default async function ContactPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
-  const services = getPublicServices().map((s) => ({ slug: s.slug, title: s.title }));
+  const content = await getContent();
+  const contactDetails = content.contactDetails;
+  const services = content.publicServices().map((s) => ({ slug: s.slug, title: s.title }));
 
   // Read only allowlisted values from the URL; unknown slugs fall back to General enquiry (guide p.135).
   const requested = first(params.service);
   const initialService = services.some((s) => s.slug === requested) ? requested : GENERAL_ENQUIRY;
 
-  const person = getPublicPerson(first(params.person));
-  const industry = getPublicIndustry(first(params.industry));
+  const person = content.publicPerson(first(params.person));
+  const industry = content.publicIndustry(first(params.industry));
   const context: EnquiryContext | undefined = person
     ? { kind: "person", slug: person.slug, label: person.name }
     : industry

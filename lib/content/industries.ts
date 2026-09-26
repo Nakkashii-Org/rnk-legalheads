@@ -1,5 +1,3 @@
-import { isPublic } from "@/lib/visibility";
-
 export type Industry = {
   slug: string;
   name: string;
@@ -12,6 +10,8 @@ export type Industry = {
   /** 90–140 word overview and four work areas: supplied by the sector owner, never invented (p.115). */
   overview?: string;
   workAreas?: { title: string; text: string }[];
+  /** Position among the six homepage sectors (H06); unset = not featured. */
+  homeOrder?: number;
 };
 
 export const industries: Industry[] = [
@@ -36,8 +36,8 @@ export const industries: Industry[] = [
   { slug: "professional-business-services", name: "Professional & Business Services", summary: "Business structure, client contracts, employment, tax and liability questions.", serviceIds: ["S01", "S18", "S28", "S30", "S36"], approved: false },
 ];
 
-/** The six sectors featured on the homepage (H06). */
-const homeOrder = [
+/** The six sectors featured on the homepage (H06), in order. */
+export const homeOrder = [
   "technology-digital-business",
   "real-estate-construction",
   "financial-services-fintech",
@@ -45,17 +45,3 @@ const homeOrder = [
   "consumer-retail",
   "manufacturing-industrials",
 ];
-
-export function getPublicIndustry(slug: string): Industry | undefined {
-  return industries.find((industry) => industry.slug === slug && isPublic(industry));
-}
-
-export function getPublicIndustries(): Industry[] {
-  return industries.filter(isPublic);
-}
-
-export function getHomeIndustries(): Industry[] {
-  return homeOrder
-    .map((slug) => industries.find((industry) => industry.slug === slug))
-    .filter((industry): industry is Industry => industry !== undefined && isPublic(industry));
-}

@@ -5,7 +5,7 @@ import ApplicationNotes from "@/components/careers/ApplicationNotes";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
 import { GENERAL_POSITIONS } from "@/lib/career-form";
-import { getOpenJobs } from "@/lib/content/jobs";
+import { getContent } from "@/lib/content/source";
 
 const LEAD =
   "Current opportunities are listed here when positions are open. Each listing explains the role, qualifications and application process.";
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "/careers" },
 };
 
-export default function CareersPage() {
-  const jobs = getOpenJobs();
+export default async function CareersPage() {
+  const jobs = (await getContent()).openJobs();
   // Real open roles first, then the general positions. Layout previews are never applied for.
   const positions = [
     ...jobs.filter((job) => !job.preview).map((job) => ({ value: job.slug, label: `${job.title} (${job.jobId})` })),

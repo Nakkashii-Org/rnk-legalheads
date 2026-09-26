@@ -2,15 +2,15 @@ import Link from "next/link";
 import HeroSlider from "@/components/home/HeroSlider";
 import PublicationCard from "@/components/insights/PublicationCard";
 import Arrow from "@/components/ui/Arrow";
-import { getHomeIndustries } from "@/lib/content/industries";
-import { getHomePublications } from "@/lib/content/publications";
-import { getPublicGroups, groupHref } from "@/lib/content/services";
+import { groupHref } from "@/lib/content/services";
 import { heroSlides } from "@/lib/content/site";
+import { getContent } from "@/lib/content/source";
 
-export default function HomePage() {
-  const groups = getPublicGroups();
-  const publications = getHomePublications();
-  const industries = getHomeIndustries();
+export default async function HomePage() {
+  const content = await getContent();
+  const groups = content.publicGroups();
+  const publications = content.homePublications();
+  const industries = content.homeIndustries();
   const hasPreviews = publications.some((item) => item.preview);
 
   return (

@@ -42,6 +42,20 @@ BACKEND_URL=http://localhost:4000   # locally; on Render, the backend service UR
 
 The rewrite is fixed at build time, so on Render set `BACKEND_URL` and then **rebuild**. Without it, the forms honestly report "could not be sent". The `/subscribe/confirm` and `/preferences` pages also use `BACKEND_URL` on the server to check email-link tokens.
 
+## Where the content comes from
+
+Pages read content with `const content = await getContent()` (`lib/content/source.ts`), then use the visibility-aware lookups in `lib/content/store.ts`, e.g. `content.publicServices()` or `content.publicService(slug)`.
+
+- **With `BACKEND_URL` set:** content comes from the backend's `GET /api/content/bundle` (MongoDB). It's cached for 5 minutes, and pages refresh in the background (`revalidate = 300`). If a refresh fails, the last good content keeps being shown.
+- **Draft review mode:** set the same `CONTENT_PREVIEW_SECRET` on the website and the backend, so the backend includes drafts.
+- **If the backend has never answered** (or `BACKEND_URL` isn't set): the content built into `lib/content/*.ts` is used (`lib/content/local.ts`), so the site is never blank. A `content.fallback_to_local` warning is logged at most once a minute.
+
+To refresh the backend's import file from these files:
+
+```bash
+SHOW_DRAFT_CONTENT=true npx tsx scripts/export-content.ts ../rnk-legalhead-backend/seed/content.json
+```
+
 ## Preview links for the email-link screens
 
 These screens are normally reached only from a verified link in an email. In draft review mode they can be previewed; each is labelled "Preview state" and changes nothing. On the public site these links show the normal screens instead.

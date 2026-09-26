@@ -6,14 +6,13 @@ import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import {
   formatDate,
-  getRelatedPublications,
   publicationTypeMeta,
   readingMinutes,
   updateStatusLabel,
   type BodyBlock,
   type Publication,
 } from "@/lib/content/publications";
-import { getPublicServices } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 
 function headingId(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -96,10 +95,11 @@ function articleJsonLd(p: Publication) {
   };
 }
 
-export default function PublicationDetail({ publication: p }: { publication: Publication }) {
+export default async function PublicationDetail({ publication: p }: { publication: Publication }) {
+  const content = await getContent();
   const meta = publicationTypeMeta[p.type];
-  const services = getPublicServices().filter((s) => p.serviceIds.includes(s.id));
-  const related = getRelatedPublications(p);
+  const services = content.publicServices().filter((s) => p.serviceIds.includes(s.id));
+  const related = content.relatedPublications(p);
   const headings = p.body.filter((b): b is Extract<BodyBlock, { kind: "h2" }> => b.kind === "h2");
   const checkedAt = p.type !== "article" ? formatDate(p.sourceCheckedAt) : undefined;
 

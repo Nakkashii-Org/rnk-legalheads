@@ -5,19 +5,19 @@ import PublicationCard from "@/components/insights/PublicationCard";
 import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicIssue, getPublicIssues, issuePublications } from "@/lib/content/newsletters";
+import { getContent } from "@/lib/content/source";
 import { formatDate } from "@/lib/content/publications";
 
 type Params = Promise<{ slug: string }>;
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return getPublicIssues().map((issue) => ({ slug: issue.slug }));
+export async function generateStaticParams() {
+  return (await getContent()).publicIssues().map((issue) => ({ slug: issue.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const issue = getPublicIssue((await params).slug);
+  const issue = (await getContent()).publicIssue((await params).slug);
   if (!issue) return {};
   return {
     title: issue.title,
@@ -29,14 +29,15 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 /** A web issue. Reading it never subscribes anyone, and publishing it never sends email (guide p.128). */
 export default async function NewsletterIssuePage({ params }: { params: Params }) {
-  const issue = getPublicIssue((await params).slug);
+  const content = await getContent();
+  const issue = content.publicIssue((await params).slug);
   if (!issue) notFound();
 
-  const all = getPublicIssues();
+  const all = content.publicIssues();
   const index = all.findIndex((i) => i.slug === issue.slug);
   const newer = index > 0 ? all[index - 1] : undefined;
   const older = index < all.length - 1 ? all[index + 1] : undefined;
-  const items = issuePublications(issue);
+  const items = content.issuePublications(issue);
 
   return (
     <>

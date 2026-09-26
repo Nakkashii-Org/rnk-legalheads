@@ -7,21 +7,20 @@ import Arrow from "@/components/ui/Arrow";
 import ContactCta from "@/components/ui/ContactCta";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicationsForService } from "@/lib/content/publications";
-import { serviceDetails } from "@/lib/content/service-details";
-import { getPublicService, getPublicServices, getServiceGroup } from "@/lib/content/services";
+import { getServiceGroup } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
 // Only approved (or, in draft review, all) services get a page; anything else is a 404.
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return getPublicServices().map((service) => ({ slug: service.slug }));
+export async function generateStaticParams() {
+  return (await getContent()).publicServices().map((service) => ({ slug: service.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const service = getPublicService((await params).slug);
+  const service = (await getContent()).publicService((await params).slug);
   if (!service) return {};
   return {
     title: service.title,
@@ -31,17 +30,18 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 }
 
 export default async function ServicePage({ params }: { params: Params }) {
-  const service = getPublicService((await params).slug);
-  const detail = service && serviceDetails[service.id];
+  const content = await getContent();
+  const service = content.publicService((await params).slug);
+  const detail = service && content.serviceDetail(service.id);
   if (!service || !detail) notFound();
 
   const group = getServiceGroup(service.group);
-  const publicServices = getPublicServices();
+  const publicServices = content.publicServices();
   const related = detail.related
     .map((id) => publicServices.find((s) => s.id === id))
     .filter((s) => s !== undefined);
   // Up to three approved publications tagged to this service (guide p.30).
-  const insights = getPublicationsForService(service.id);
+  const insights = content.publicationsForService(service.id);
 
   const sections = [
     { id: "overview", label: "Overview" },

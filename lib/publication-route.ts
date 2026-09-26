@@ -1,21 +1,17 @@
 import type { Metadata } from "next";
-import {
-  getPublicPublication,
-  getPublicPublications,
-  publicationTypeMeta,
-  type PublicationType,
-} from "@/lib/content/publications";
+import { publicationTypeMeta, type PublicationType } from "@/lib/content/publications";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
 /** Shared route helpers for the three publication detail pages. */
 export function publicationRoute(type: PublicationType) {
   return {
-    generateStaticParams() {
-      return getPublicPublications(type).map((p) => ({ slug: p.slug }));
+    async generateStaticParams() {
+      return (await getContent()).publicPublications(type).map((p) => ({ slug: p.slug }));
     },
     async generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-      const p = getPublicPublication(type, (await params).slug);
+      const p = (await getContent()).publicPublication(type, (await params).slug);
       if (!p) return {};
       return {
         title: p.title,
@@ -26,7 +22,7 @@ export function publicationRoute(type: PublicationType) {
       };
     },
     async load(params: Params) {
-      return getPublicPublication(type, (await params).slug);
+      return (await getContent()).publicPublication(type, (await params).slug);
     },
   };
 }

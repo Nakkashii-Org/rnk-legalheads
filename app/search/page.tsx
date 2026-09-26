@@ -4,15 +4,14 @@ import Link from "next/link";
 import Arrow from "@/components/ui/Arrow";
 import Highlight from "@/components/ui/Highlight";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicIssues } from "@/lib/content/newsletters";
-import { getPublicPeople, personSearchText } from "@/lib/content/people";
+import { personSearchText } from "@/lib/content/people";
 import {
-  getPublicPublications,
   publicationHref,
   publicationSearchText,
   publicationTypeMeta,
 } from "@/lib/content/publications";
-import { getPublicServices, getServiceGroup, serviceSearchText } from "@/lib/content/services";
+import { getServiceGroup, serviceSearchText } from "@/lib/content/services";
+import { getContent } from "@/lib/content/source";
 import { MAX_QUERY_LENGTH, matchesAll, queryWords } from "@/lib/search";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -39,12 +38,14 @@ export const metadata: Metadata = {
 };
 
 /** Searches only approved, published content; never enquiries or subscriber records (guide p.23). */
-function runSearch(query: string): Group[] {
+async function runSearch(query: string): Promise<Group[]> {
   const words = queryWords(query);
   if (words.length === 0) return [];
 
-  const services: Result[] = getPublicServices()
-    .filter((s) => matchesAll(serviceSearchText(s), words))
+  const content = await getContent();
+  const publicServices = content.publicServices();
+  const services: Result[] = publicServices
+    .filter((s) => matchesAll(serviceSearchText(s, content.serviceDetail(s.id)), words))
     .map((s) => ({
       key: s.id,
       label: `Service / ${getServiceGroup(s.group).name}`,
@@ -53,13 +54,15 @@ function runSearch(query: string): Group[] {
       href: `/services/${s.slug}`,
     }));
 
-  const people: Result[] = getPublicPeople()
-    .filter((p) => matchesAll(personSearchText(p), words))
+  const people: Result[] = content
+    .publicPeople()
+    .filter((p) => matchesAll(personSearchText(p, publicServices), words))
     .map((p) => ({ key: p.slug, label: `Person / ${p.role}`, title: p.name, excerpt: p.practiceSummary, href: `/people/${p.slug}` }));
 
   const insights: Result[] = [
-    ...getPublicPublications()
-      .filter((p) => matchesAll(publicationSearchText(p), words))
+    ...content
+      .publicPublications()
+      .filter((p) => matchesAll(publicationSearchText(p, publicServices), words))
       .map((p) => ({
         key: `${p.type}-${p.slug}`,
         label: `${publicationTypeMeta[p.type].label}${p.preview ? " / Layout preview" : ""}`,
@@ -68,7 +71,8 @@ function runSearch(query: string): Group[] {
         href: publicationHref(p),
       })),
     // Newsletter issues are searchable too (guide p.23).
-    ...getPublicIssues()
+    ...content
+      .publicIssues()
       .filter((issue) => matchesAll(`${issue.title} ${issue.focus} ${issue.introduction} ${issue.contents.join(" ")}`, words))
       .map((issue) => ({
         key: `issue-${issue.slug}`,
@@ -93,7 +97,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
   const type = TYPE_FILTERS.some((t) => t.id === typeParam) ? typeParam : "";
 
   const words = queryWords(query);
-  const groups = runSearch(query);
+  const groups = await runSearch(query);
   const total = groups.reduce((n, g) => n + g.results.length, 0);
   const shown = groups.filter((g) => (!type || g.id === type) && g.results.length > 0);
 

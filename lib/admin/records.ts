@@ -7,24 +7,18 @@ import {
   type RecordValues,
   type WorkflowStatus,
 } from "@/lib/admin/config";
-import { getPublicIndustries } from "@/lib/content/industries";
-import { getPublicJobs } from "@/lib/content/jobs";
-import { getPublicIssues } from "@/lib/content/newsletters";
-import { getPublicPeople } from "@/lib/content/people";
 import {
-  getPublicPublications,
   publicationHref,
   publicationTypeMeta,
   type BodyBlock,
   type Publication,
   type PublicationType,
 } from "@/lib/content/publications";
-import { serviceDetails } from "@/lib/content/service-details";
-import { getPublicServices } from "@/lib/content/services";
+import type { Content } from "@/lib/content/store";
 
 /**
- * Until the CMS backend exists, the admin UI reads the site's local content files. Every record
- * in them is unapproved, so they show as drafts; nothing here is written back.
+ * Until the CMS admin APIs exist (phase C), the admin UI reads the website's content snapshot.
+ * Every record is unapproved, so they show as drafts; nothing here is written back.
  */
 
 export type AdminRecord = {
@@ -59,10 +53,10 @@ function blocksToHtml(blocks: BodyBlock[]): string {
 
 const paragraphsToHtml = (paragraphs: string[]) => paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
 
-export function listRecords(type: ContentTypeKey): AdminRecord[] {
+export function listRecords(content: Content, type: ContentTypeKey): AdminRecord[] {
   const pubType = publicationTypeFor[type];
   if (pubType) {
-    return getPublicPublications(pubType).map((p) => ({
+    return content.publicPublications(pubType).map((p) => ({
       type,
       id: p.slug,
       title: p.title,
@@ -75,7 +69,7 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
   }
   switch (type) {
     case "services":
-      return getPublicServices().map((s) => ({
+      return content.publicServices().map((s) => ({
         type,
         id: s.slug,
         title: s.title,
@@ -85,7 +79,7 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
         layoutPreview: false,
       }));
     case "people":
-      return getPublicPeople().map((p) => ({
+      return content.publicPeople().map((p) => ({
         type,
         id: p.slug,
         title: p.name,
@@ -95,7 +89,7 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
         layoutPreview: Boolean(p.preview),
       }));
     case "industries":
-      return getPublicIndustries().map((i) => ({
+      return content.publicIndustries().map((i) => ({
         type,
         id: i.slug,
         title: i.name,
@@ -105,7 +99,7 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
         layoutPreview: false,
       }));
     case "newsletters":
-      return getPublicIssues().map((n) => ({
+      return content.publicIssues().map((n) => ({
         type,
         id: n.slug,
         title: n.title,
@@ -115,7 +109,7 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
         layoutPreview: Boolean(n.preview),
       }));
     case "jobs":
-      return getPublicJobs().map((j) => ({
+      return content.publicJobs().map((j) => ({
         type,
         id: j.slug,
         title: j.title,
@@ -129,11 +123,11 @@ export function listRecords(type: ContentTypeKey): AdminRecord[] {
   }
 }
 
-export function getRecord(type: ContentTypeKey, id: string): { record: AdminRecord; values: RecordValues } | undefined {
-  const record = listRecords(type).find((r) => r.id === id);
+export function getRecord(content: Content, type: ContentTypeKey, id: string): { record: AdminRecord; values: RecordValues } | undefined {
+  const record = listRecords(content, type).find((r) => r.id === id);
   const config = getContentType(type);
   if (!record || !config) return undefined;
-  return { record, values: { ...emptyValues(config), ...valuesFor(config, id) } };
+  return { record, values: { ...emptyValues(config), ...valuesFor(content, config, id) } };
 }
 
 function publicationValues(p: Publication): RecordValues {
@@ -172,18 +166,18 @@ function publicationValues(p: Publication): RecordValues {
   return base;
 }
 
-function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
+function valuesFor(content: Content, config: ContentTypeConfig, id: string): RecordValues {
   const pubType = publicationTypeFor[config.key];
   if (pubType) {
-    const p = getPublicPublications(pubType).find((x) => x.slug === id);
+    const p = content.publicPublications(pubType).find((x) => x.slug === id);
     return p ? publicationValues(p) : {};
   }
   switch (config.key) {
     case "services": {
-      const s = getPublicServices().find((x) => x.slug === id);
+      const s = content.publicServices().find((x) => x.slug === id);
       if (!s) return {};
-      const d = serviceDetails[s.id];
-      const bySlug = new Map(getPublicServices().map((x) => [x.id, x.slug]));
+      const d = content.serviceDetail(s.id);
+      const bySlug = new Map(content.publicServices().map((x) => [x.id, x.slug]));
       return {
         title: s.title,
         slug: s.slug,
@@ -197,7 +191,7 @@ function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
       };
     }
     case "people": {
-      const p = getPublicPeople().find((x) => x.slug === id);
+      const p = content.publicPeople().find((x) => x.slug === id);
       if (!p) return {};
       return {
         name: p.name,
@@ -210,11 +204,11 @@ function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
         enrolment: p.enrolment ?? "",
         languages: p.languages ?? "",
         office: p.office ?? "",
-        services: serviceSlugs(p.serviceIds),
+        services: serviceSlugs(content, p.serviceIds),
       };
     }
     case "industries": {
-      const i = getPublicIndustries().find((x) => x.slug === id);
+      const i = content.publicIndustries().find((x) => x.slug === id);
       if (!i) return {};
       return {
         name: i.name,
@@ -223,11 +217,11 @@ function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
         intro: i.intro ?? "",
         overview: i.overview ?? "",
         workAreas: i.workAreas?.length ? i.workAreas : [{ title: "", text: "" }],
-        services: serviceSlugs(i.serviceIds),
+        services: serviceSlugs(content, i.serviceIds),
       };
     }
     case "newsletters": {
-      const n = getPublicIssues().find((x) => x.slug === id);
+      const n = content.publicIssues().find((x) => x.slug === id);
       if (!n) return {};
       return {
         title: n.title,
@@ -239,7 +233,7 @@ function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
       };
     }
     case "jobs": {
-      const j = getPublicJobs().find((x) => x.slug === id);
+      const j = content.publicJobs().find((x) => x.slug === id);
       if (!j) return {};
       return {
         jobId: j.jobId,
@@ -263,17 +257,17 @@ function valuesFor(config: ContentTypeConfig, id: string): RecordValues {
   }
 }
 
-function serviceSlugs(ids: string[]): string[] {
-  const bySlug = new Map(getPublicServices().map((s) => [s.id, s.slug]));
+function serviceSlugs(content: Content, ids: string[]): string[] {
+  const bySlug = new Map(content.publicServices().map((s) => [s.id, s.slug]));
   return ids.map((id) => bySlug.get(id) ?? "").filter(Boolean);
 }
 
 /** Picker options for relationship fields. */
-export function editorOptions(): { services: Option[]; people: Option[]; publications: Option[] } {
+export function editorOptions(content: Content): { services: Option[]; people: Option[]; publications: Option[] } {
   return {
-    services: getPublicServices().map((s) => ({ value: s.slug, label: s.title })),
-    people: getPublicPeople().map((p) => ({ value: p.slug, label: p.name })),
-    publications: getPublicPublications().map((p) => ({
+    services: content.publicServices().map((s) => ({ value: s.slug, label: s.title })),
+    people: content.publicPeople().map((p) => ({ value: p.slug, label: p.name })),
+    publications: content.publicPublications().map((p) => ({
       value: `${p.type}:${p.slug}`,
       label: `${publicationTypeMeta[p.type].label}: ${p.title}`,
     })),

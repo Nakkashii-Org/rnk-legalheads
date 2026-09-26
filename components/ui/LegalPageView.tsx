@@ -3,7 +3,7 @@ import Link from "next/link";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import { isApproved, legalPages, type LegalPage } from "@/lib/content/legal";
-import { contactDetails } from "@/lib/content/site";
+import { getContent } from "@/lib/content/source";
 import { showDrafts } from "@/lib/visibility";
 
 /** Pages are indexed only once every section is approved and dated. */
@@ -17,7 +17,8 @@ export function legalMetadata(page: LegalPage): Metadata {
 }
 
 /** G01–G03 reading layout (guide p.138). */
-export default function LegalPageView({ page }: { page: LegalPage }) {
+export default async function LegalPageView({ page }: { page: LegalPage }) {
+  const { contactDetails } = await getContent();
   const approved = isApproved(page);
   const others = legalPages.filter((p) => p.path !== page.path);
 

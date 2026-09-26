@@ -1,6 +1,5 @@
-import { getPublicServices } from "@/lib/content/services";
+import type { Service } from "@/lib/content/services";
 import { matchesAll, queryWords } from "@/lib/search";
-import { showDrafts } from "@/lib/visibility";
 
 export type PublicationType = "article" | "judgment" | "update";
 
@@ -81,10 +80,10 @@ export function publicationHref(p: Pick<Publication, "type" | "slug">): string {
 }
 
 // Approved publications are added here until the CMS takes over (Step 8). The guide supplies none.
-const publications: Publication[] = [];
+export const publications: Publication[] = [];
 
 // Layout previews from the guide's K03, J02 and U02 screens. Draft review mode only.
-const layoutPreviews: Publication[] = [
+export const publicationLayoutPreviews: Publication[] = [
   {
     type: "article",
     slug: "preparing-for-a-commercial-transaction",
@@ -157,43 +156,16 @@ const layoutPreviews: Publication[] = [
 ];
 
 /** Newest first; records without a date (previews) sort last. */
-function byDateDesc(a: Publication, b: Publication): number {
+export function byDateDesc(a: Publication, b: Publication): number {
   return (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "");
-}
-
-export function getPublicPublications(type?: PublicationType): Publication[] {
-  const approved = publications.filter((p) => p.approved);
-  const list = approved.length > 0 || !showDrafts ? approved : [...publications, ...layoutPreviews];
-  return list.filter((p) => !type || p.type === type).sort(byDateDesc);
-}
-
-export function getPublicPublication(type: PublicationType, slug: string): Publication | undefined {
-  return getPublicPublications(type).find((p) => p.slug === slug);
-}
-
-/** Three most recent approved publications for the homepage (H05). */
-export function getHomePublications(): Publication[] {
-  return getPublicPublications().slice(0, 3);
-}
-
-export function getPublicationsForService(serviceId: string, limit = 3): Publication[] {
-  return getPublicPublications()
-    .filter((p) => p.serviceIds.includes(serviceId))
-    .slice(0, limit);
-}
-
-export function getRelatedPublications(current: Publication, limit = 3): Publication[] {
-  return getPublicPublications()
-    .filter((p) => p.slug !== current.slug && p.serviceIds.some((id) => current.serviceIds.includes(id)))
-    .slice(0, limit);
 }
 
 export function bodyText(p: Publication): string {
   return p.body.map((block) => (block.kind === "ul" ? block.items.join(" ") : block.text)).join(" ");
 }
 
-export function publicationSearchText(p: Publication): string {
-  const services = getPublicServices()
+export function publicationSearchText(p: Publication, publicServices: Service[]): string {
+  const services = publicServices
     .filter((s) => p.serviceIds.includes(s.id))
     .map((s) => s.title)
     .join(" ");
@@ -209,14 +181,14 @@ export type PublicationFilters = {
   court?: string;
 };
 
-export function filterPublications(list: Publication[], filters: PublicationFilters): Publication[] {
+export function filterPublications(list: Publication[], filters: PublicationFilters, publicServices: Service[]): Publication[] {
   const words = queryWords(filters.query);
   return list.filter(
     (p) =>
       (!filters.serviceId || p.serviceIds.includes(filters.serviceId)) &&
       (!filters.year || p.publishedAt?.startsWith(filters.year)) &&
       (!filters.court || (p.type === "judgment" && p.court === filters.court)) &&
-      (words.length === 0 || matchesAll(publicationSearchText(p), words)),
+      (words.length === 0 || matchesAll(publicationSearchText(p, publicServices), words)),
   );
 }
 

@@ -5,18 +5,19 @@ import ApplicationNotes from "@/components/careers/ApplicationNotes";
 import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
-import { getPublicJob, getPublicJobs, type Job } from "@/lib/content/jobs";
+import type { Job } from "@/lib/content/jobs";
+import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
 export const dynamicParams = false;
 
-export function generateStaticParams() {
-  return getPublicJobs().map((job) => ({ slug: job.slug }));
+export async function generateStaticParams() {
+  return (await getContent()).publicJobs().map((job) => ({ slug: job.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
-  const job = getPublicJob((await params).slug);
+  const job = (await getContent()).publicJob((await params).slug);
   if (!job) return {};
   return {
     title: job.title,
@@ -42,7 +43,7 @@ function jobPostingJsonLd(job: Job) {
 }
 
 export default async function JobPage({ params }: { params: Params }) {
-  const job = getPublicJob((await params).slug);
+  const job = (await getContent()).publicJob((await params).slug);
   if (!job) notFound();
 
   const open = job.status === "open";

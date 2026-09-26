@@ -1,5 +1,4 @@
-import { getPublicServices } from "@/lib/content/services";
-import { showDrafts } from "@/lib/visibility";
+import type { Service } from "@/lib/content/services";
 
 export type Person = {
   slug: string;
@@ -21,11 +20,11 @@ export type Person = {
   preview?: boolean;
 };
 
-// Verified profiles are added here (Sanity in Step 8). The guide supplies none, so none are invented.
-const people: Person[] = [];
+// Verified profiles come from the CMS. The guide supplies none, so none are invented.
+export const people: Person[] = [];
 
 // Layout-only records for draft review (P01/P02). Never shown on the public site.
-const layoutPreviews: Person[] = [1, 2, 3].map((n) => ({
+export const peopleLayoutPreviews: Person[] = [1, 2, 3].map((n) => ({
   slug: `lawyer-profile-${n}`,
   name: `Lawyer profile ${n}`,
   role: "Role / to be approved",
@@ -41,19 +40,9 @@ const layoutPreviews: Person[] = [1, 2, 3].map((n) => ({
   preview: true,
 }));
 
-export function getPublicPeople(): Person[] {
-  const approved = people.filter((person) => person.approved);
-  if (approved.length > 0 || !showDrafts) return approved;
-  return [...people, ...layoutPreviews];
-}
-
-export function getPublicPerson(slug: string): Person | undefined {
-  return getPublicPeople().find((person) => person.slug === slug);
-}
-
 /** Text used by site search: profile fields plus the names of linked services. */
-export function personSearchText(person: Person): string {
-  const services = getPublicServices()
+export function personSearchText(person: Person, publicServices: Service[]): string {
+  const services = publicServices
     .filter((s) => person.serviceIds.includes(s.id))
     .map((s) => s.title)
     .join(" ");

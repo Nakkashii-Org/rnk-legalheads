@@ -4,8 +4,8 @@ import Link from "next/link";
 import Portrait from "@/components/people/Portrait";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
-import { filterPeople, getPublicPeople } from "@/lib/content/people";
-import { getPublicServices } from "@/lib/content/services";
+import { filterPeople } from "@/lib/content/people";
+import { getContent } from "@/lib/content/source";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -28,10 +28,11 @@ export async function generateMetadata({ searchParams }: { searchParams: SearchP
 export default async function PeoplePage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const name = first(params.q).trim().slice(0, 80);
-  const services = getPublicServices();
+  const content = await getContent();
+  const services = content.publicServices();
   const service = services.find((s) => s.slug === first(params.service));
 
-  const people = getPublicPeople();
+  const people = content.publicPeople();
   const results = filterPeople(people, name, service?.id);
   const hasPreviews = people.some((person) => person.preview);
   // Only offer services that at least one listed person is linked to.

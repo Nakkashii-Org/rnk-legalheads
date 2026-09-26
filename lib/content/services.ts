@@ -1,6 +1,5 @@
-import { serviceDetails } from "@/lib/content/service-details";
+import type { ServiceDetail } from "@/lib/content/service-details";
 import { matchesAll, queryWords } from "@/lib/search";
-import { isPublic } from "@/lib/visibility";
 
 export type ServiceGroupKey =
   | "business"
@@ -83,16 +82,8 @@ export const services: Service[] = [
   { id: "S40", slug: "government-contracts-procurement", title: "Government Contracts & Procurement", group: "regulated", summary: "Tender documents, public contracts, bid-related disputes and project implementation.", approved: false },
 ];
 
-export function getPublicServices(): Service[] {
-  return services.filter(isPublic);
-}
-
 export function groupHref(group: ServiceGroup): string {
   return `/services?group=${encodeURIComponent(group.alias)}`;
-}
-
-export function getPublicService(slug: string): Service | undefined {
-  return getPublicServices().find((service) => service.slug === slug);
 }
 
 export function getServiceGroup(key: ServiceGroupKey): ServiceGroup {
@@ -106,26 +97,29 @@ export function findGroupByAlias(value: string | undefined): ServiceGroup | unde
   return serviceGroups.find((group) => group.alias.toLowerCase() === needle || group.key === needle);
 }
 
-export function serviceSearchText(service: Service): string {
-  const detail = serviceDetails[service.id];
+export function serviceSearchText(service: Service, detail: ServiceDetail | undefined): string {
   const scope = detail ? detail.scope.map((area) => `${area.title} ${area.text}`).join(" ") : "";
   return `${service.title} ${service.summary} ${getServiceGroup(service.group).name} ${scope}`.toLowerCase();
 }
 
 /** Group and keyword filters combine (guide p.26). Every query word must match. */
-export function filterServices(list: Service[], group: ServiceGroup | undefined, query: string): Service[] {
+export function filterServices(
+  list: Service[],
+  group: ServiceGroup | undefined,
+  query: string,
+  details: Record<string, ServiceDetail>,
+): Service[] {
   const words = queryWords(query);
   return list.filter((service) => {
     if (group && service.group !== group.key) return false;
-    return words.length === 0 || matchesAll(serviceSearchText(service), words);
+    return words.length === 0 || matchesAll(serviceSearchText(service, details[service.id]), words);
   });
 }
 
 export type GroupWithServices = ServiceGroup & { services: Service[] };
 
-/** Groups that have at least one public service, in the guide's order. */
-export function getPublicGroups(): GroupWithServices[] {
-  const visible = getPublicServices();
+/** Groups that have at least one of the given services, in the guide's order. */
+export function groupServices(visible: Service[]): GroupWithServices[] {
   return serviceGroups
     .map((group) => ({ ...group, services: visible.filter((s) => s.group === group.key) }))
     .filter((group) => group.services.length > 0);

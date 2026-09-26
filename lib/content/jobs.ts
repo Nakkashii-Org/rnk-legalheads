@@ -1,5 +1,3 @@
-import { showDrafts } from "@/lib/visibility";
-
 export type Job = {
   jobId: string;
   slug: string;
@@ -22,9 +20,9 @@ export type Job = {
 };
 
 // Only real, approved vacancies are listed (guide p.12, p.137). None have been supplied.
-const jobs: Job[] = [];
+export const jobs: Job[] = [];
 
-const layoutPreview: Job = {
+export const jobLayoutPreview: Job = {
   jobId: "Approved job ID",
   slug: "approved-role-title",
   title: "Approved role title",
@@ -41,23 +39,3 @@ const layoutPreview: Job = {
   approved: false,
   preview: true,
 };
-
-function visibleJobs(): Job[] {
-  const approved = jobs.filter((job) => job.approved);
-  if (approved.length > 0 || !showDrafts) return approved;
-  return [...jobs, layoutPreview];
-}
-
-/** Open roles for the careers index. Closed roles drop out of the listing. */
-export function getOpenJobs(): Job[] {
-  return visibleJobs().filter((job) => job.status === "open");
-}
-
-/** Detail pages stay available for closed roles so they can show a closed status (guide p.137). */
-export function getPublicJob(slug: string): Job | undefined {
-  return visibleJobs().find((job) => job.slug === slug);
-}
-
-export function getPublicJobs(): Job[] {
-  return visibleJobs();
-}
