@@ -125,6 +125,16 @@ export default function UsersTable({ users, currentUserId }: { users: AdminUserR
                     Resend invitation
                   </button>
                 )}
+                {u.status === "active" && (
+                  <button
+                    type="button"
+                    disabled={Boolean(busy)}
+                    onClick={() => call(u.id, "/password-reset", { method: "POST" }, `A password reset link was emailed to ${u.email}. It works once, for 1 hour.`)}
+                    className={small}
+                  >
+                    Send password reset link<span className="sr-only"> to {u.name}</span>
+                  </button>
+                )}
                 {u.status !== "invited" && !self && (
                   <button type="button" disabled={Boolean(busy)} onClick={() => call(u.id, "/reset-mfa", { method: "POST" }, `2-step verification reset. ${u.name} will scan a new QR code at the next sign-in.`)} className={small}>
                     Reset 2-step<span className="sr-only"> for {u.name}</span>

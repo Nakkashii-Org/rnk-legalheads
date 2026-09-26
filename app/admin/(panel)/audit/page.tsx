@@ -25,6 +25,9 @@ const LABELS: Record<string, string> = {
   "user.disabled": "Disabled a user",
   "user.mfa_reset": "Reset 2-step verification",
   "user.admin_created_by_command": "Administrator created (setup command)",
+  "user.password_reset_sent": "Sent a password reset link",
+  "auth.password_reset_completed": "Changed password (reset link)",
+  "auth.password_reset_code_failed": "Wrong code on password reset",
 };
 
 const when = (iso: string) =>

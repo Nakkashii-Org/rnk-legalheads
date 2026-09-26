@@ -191,8 +191,8 @@ export default function LoginForm() {
       )}
 
       <p className="border-t border-line pt-5 text-[13px] leading-5 text-muted">
-        Accounts are created by the firm&apos;s CMS Administrator. There is no public sign-up. If you have forgotten your
-        password or lost your authenticator, ask the Administrator to reset it.
+        Accounts are created by the firm&apos;s CMS Administrator. There is no public sign-up. Forgot your password? Ask
+        the Administrator to send you a password reset link. Lost your phone? Ask them to reset your 2-step verification.
       </p>
     </div>
   );
