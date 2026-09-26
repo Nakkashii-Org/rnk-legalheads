@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import AddUserForm from "@/components/admin/AddUserForm";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
-import EmptyTable from "@/components/admin/EmptyTable";
+import EmptyState from "@/components/admin/EmptyState";
+import UsersTable, { type AdminUserRow } from "@/components/admin/UsersTable";
 import { ROLES } from "@/lib/admin/config";
+import { adminGet, getAdminUser } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Users and roles" };
 
@@ -17,7 +19,18 @@ const permissions: { action: string; roles: string[] }[] = [
   { action: "Users and roles", roles: ["admin"] },
 ];
 
-export default function UsersPage() {
+export default async function UsersPage() {
+  const [me, result] = await Promise.all([getAdminUser(), adminGet<{ users: AdminUserRow[] }>("/users")]);
+  if (!result.ok)
+    return (
+      <div className="space-y-8">
+        <AdminPageHeader crumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Users and roles" }]} title="Users and roles" />
+        <EmptyState title={result.status === 403 ? "Administrators only" : "Users can't be loaded right now"}>
+          {result.status === 403 ? "Ask a CMS Administrator if you need an account changed." : "Please refresh the page in a minute."}
+        </EmptyState>
+      </div>
+    );
+
   return (
     <div className="space-y-8">
       <AdminPageHeader
@@ -26,9 +39,12 @@ export default function UsersPage() {
         description="Named accounts only, each with two-step sign-in. There is no public sign-up. Newsletter sending is done in Brevo and is not a CMS role."
       />
 
-      <EmptyTable caption="CMS users" columns={["Name", "Email", "Roles", "Two-step sign-in", "Last sign-in", "Status"]} emptyTitle="No accounts yet">
-        The first Administrator account is created during backend setup. Administrators then invite everyone else here.
-      </EmptyTable>
+      <section aria-labelledby="accounts-title" className="space-y-3">
+        <h2 id="accounts-title" className="font-serif text-[20px] leading-[28px]">
+          Accounts ({result.data.users.length})
+        </h2>
+        <UsersTable users={result.data.users} currentUserId={me?.id ?? ""} />
+      </section>
 
       <AddUserForm />
 

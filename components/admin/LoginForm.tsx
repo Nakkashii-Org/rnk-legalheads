@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import MfaEnrolment, { type Enrolment } from "@/components/admin/MfaEnrolment";
 import ErrorSummary from "@/components/forms/ErrorSummary";
 import Arrow from "@/components/ui/Arrow";
 
@@ -12,10 +13,12 @@ const inputClass =
   "mt-1.5 h-12 w-full border bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal aria-[invalid=true]:border-action";
 
 /** A01: named accounts, password then authenticator code. No sign-up and no shared password. */
-export default function LoginForm({ initialStep = "credentials" }: { initialStep?: Step }) {
+export default function LoginForm() {
   const router = useRouter();
   const summaryRef = useRef<HTMLDivElement>(null);
-  const [step, setStep] = useState<Step>(initialStep);
+  const codeRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState<Step>("credentials");
+  const [enrolment, setEnrolment] = useState<Enrolment>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -39,19 +42,16 @@ export default function LoginForm({ initialStep = "credentials" }: { initialStep
         credentials: "same-origin",
         body: JSON.stringify(body),
       });
-      return response;
+      const data = (await response.json().catch(() => ({}))) as Record<string, string>;
+      return { status: response.status, data };
     } catch {
-      return undefined;
+      return { status: 0, data: {} as Record<string, string> };
     } finally {
       setBusy(false);
     }
   }
 
-  function explain(response: Response | undefined) {
-    if (response?.status === 401) setFailure("The email address or password is not correct.");
-    else if (response?.status === 429) setFailure("Too many attempts. Sign-in is locked for a few minutes.");
-    else setFailure("Sign-in is not available yet. The CMS backend is not connected, so no account can be checked.");
-  }
+  const unavailable = "Sign-in isn't available right now. Please try again in a minute.";
 
   async function onCredentials(event: React.FormEvent) {
     event.preventDefault();
@@ -59,20 +59,35 @@ export default function LoginForm({ initialStep = "credentials" }: { initialStep
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) found.email = "Enter your work email address.";
     if (!password) found.password = "Enter your password.";
     if (!showErrors(found)) return;
-    const response = await post("login", { email: email.trim(), password });
-    if (response?.ok) {
+    const { status, data } = await post("login", { email: email.trim(), password });
+    if (status === 200) {
       setPassword("");
+      setCode("");
+      setEnrolment(data.step === "enroll" ? { qr: data.qr, secret: data.secret } : undefined);
       setStep("mfa");
-    } else explain(response);
+      requestAnimationFrame(() => codeRef.current?.focus());
+    } else if (status === 401) setFailure("The email address or password is not correct.");
+    else if (status === 429)
+      setFailure(data.error === "locked" ? "Too many wrong attempts. This account is locked for 15 minutes." : "Too many attempts. Please wait a few minutes.");
+    else setFailure(unavailable);
   }
 
   async function onCode(event: React.FormEvent) {
     event.preventDefault();
     if (!showErrors(/^\d{6}$/.test(code) ? {} : { code: "Enter the 6-digit code from your authenticator app." })) return;
-    const response = await post("mfa", { code });
-    if (response?.ok) router.push("/admin");
-    else if (response?.status === 401) setFailure("That code is not correct or has expired. Try the current code.");
-    else explain(response);
+    const { status, data } = await post("mfa", { code });
+    if (status === 200) {
+      router.push("/admin");
+      router.refresh();
+    } else if (status === 401 && data.error === "start_again") {
+      setStep("credentials");
+      setEnrolment(undefined);
+      setFailure("For your security, please sign in again.");
+    } else if (status === 401) {
+      setCode("");
+      setFailure("That code is not correct or has already been used. Wait for the next code and try again.");
+    } else if (status === 429) setFailure("Too many attempts. Please wait a few minutes.");
+    else setFailure(unavailable);
   }
 
   const errorList = (Object.keys(errors) as (keyof Errors)[]).filter((k) => errors[k]);
@@ -82,6 +97,11 @@ export default function LoginForm({ initialStep = "credentials" }: { initialStep
         {errors[key]}
       </p>
     ) : null;
+  const failureBox = failure && (
+    <p role="alert" className="border-l-2 border-action bg-warm px-4 py-3 text-[14px] leading-[22px]">
+      {failure}
+    </p>
+  );
 
   return (
     <div className="space-y-6">
@@ -122,23 +142,24 @@ export default function LoginForm({ initialStep = "credentials" }: { initialStep
             />
             {fieldError("password")}
           </div>
-          {failure && (
-            <p role="alert" className="border-l-2 border-action bg-warm px-4 py-3 text-[14px] leading-[22px]">
-              {failure}
-            </p>
-          )}
+          {failureBox}
           <button type="submit" disabled={busy} className="btn btn-primary w-full justify-center disabled:cursor-wait disabled:opacity-70">
             {busy ? "Checking…" : "Continue"} {!busy && <Arrow direction="right" />}
           </button>
         </form>
       ) : (
         <form onSubmit={onCode} noValidate aria-label="Two-step verification" className="space-y-5">
-          <p className="text-[14px] leading-[22px] text-muted">Open your authenticator app and enter the 6-digit code for RNK CMS.</p>
+          {enrolment ? (
+            <MfaEnrolment enrolment={enrolment} intro="Your 2-step verification was reset. Connect your authenticator app again:" />
+          ) : (
+            <p className="text-[14px] leading-[22px] text-muted">Open your authenticator app and enter the 6-digit code for RNK Legalheads CMS.</p>
+          )}
           <div>
             <label htmlFor="code" className="text-[14px] font-bold">
               Verification code
             </label>
             <input
+              ref={codeRef}
               id="code"
               inputMode="numeric"
               autoComplete="one-time-code"
@@ -151,15 +172,19 @@ export default function LoginForm({ initialStep = "credentials" }: { initialStep
             />
             {fieldError("code")}
           </div>
-          {failure && (
-            <p role="alert" className="border-l-2 border-action bg-warm px-4 py-3 text-[14px] leading-[22px]">
-              {failure}
-            </p>
-          )}
+          {failureBox}
           <button type="submit" disabled={busy} className="btn btn-primary w-full justify-center disabled:cursor-wait disabled:opacity-70">
             {busy ? "Verifying…" : "Verify and sign in"}
           </button>
-          <button type="button" onClick={() => setStep("credentials")} className="inline-flex min-h-11 items-center text-[13px] underline underline-offset-4">
+          <button
+            type="button"
+            onClick={() => {
+              setStep("credentials");
+              setEnrolment(undefined);
+              setFailure(undefined);
+            }}
+            className="inline-flex min-h-11 items-center text-[13px] underline underline-offset-4"
+          >
             Use a different account
           </button>
         </form>

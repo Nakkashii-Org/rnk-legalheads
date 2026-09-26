@@ -1,12 +1,21 @@
 import type { Metadata } from "next";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
+import EmptyState from "@/components/admin/EmptyState";
 import SettingsForm from "@/components/admin/SettingsForm";
+import { getAdminUser, isAdmin } from "@/lib/admin/session";
 import { footerColumns, legalLinks, primaryNav } from "@/lib/content/site";
 import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Site settings" };
 
 export default async function SettingsPage() {
+  if (!isAdmin(await getAdminUser()))
+    return (
+      <div className="space-y-8">
+        <AdminPageHeader crumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Site settings" }]} title="Site settings" />
+        <EmptyState title="Administrators only" />
+      </div>
+    );
   const { site, contactDetails } = await getContent();
   const navigation = [
     { area: "Main menu", links: primaryNav },

@@ -9,11 +9,12 @@ export type ActionState =
   | { kind: "failed"; message: string };
 
 export const NOT_CONNECTED =
-  "The CMS backend is not connected yet, so nothing was saved or changed. Your work is still on this page.";
+  "Saving content arrives in the next phase of the CMS, so nothing was saved or changed. Your work is still on this page.";
 
 /**
- * Calls an admin API. The routes are the contract in RNK_Backend_and_CMS_Plan.md; until they
- * exist every call fails, and the UI must say so rather than pretend it worked.
+ * Calls an admin API (the contract in RNK_Backend_and_CMS_Plan.md). Sign-in, users and the
+ * audit log are live; content endpoints arrive in phase C and answer 404 until then. Failures are
+ * always reported, never presented as success.
  */
 export async function adminRequest(path: string, init: RequestInit = {}): Promise<{ ok: boolean; status: number }> {
   try {

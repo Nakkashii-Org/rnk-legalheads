@@ -1,15 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ActionNotice from "@/components/admin/ActionNotice";
 import ErrorSummary from "@/components/forms/ErrorSummary";
 import { ROLES } from "@/lib/admin/config";
 import { useAdminAction } from "@/lib/admin/request";
+import type { ActionState } from "@/lib/admin/request";
 
 type Errors = Partial<Record<"u-name" | "u-email" | "u-roles", string>>;
 
 /** Administrator only. The new user gets an email to set a password and an authenticator. */
 export default function AddUserForm() {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [roles, setRoles] = useState<string[]>([]);
@@ -28,17 +31,38 @@ export default function AddUserForm() {
       requestAnimationFrame(() => summaryRef.current?.focus());
       return;
     }
-    const ok = await action.run(
-      "Adding user",
-      "/users",
-      { method: "POST", body: JSON.stringify({ name: name.trim(), email: email.trim(), roles }) },
-      `Invitation sent to ${email.trim()}. They set a password and an authenticator before first sign-in.`,
-    );
-    if (ok) {
-      setName("");
-      setEmail("");
-      setRoles([]);
+    action.setState({ kind: "working", label: "Sending invitation" });
+    let result: ActionState;
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), roles }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { emailed?: boolean; errors?: Errors };
+      if (response.ok) {
+        result = {
+          kind: "done",
+          message: data.emailed
+            ? `Invitation sent to ${email.trim()}. They set a password and connect an authenticator before their first sign-in.`
+            : `Account created for ${email.trim()}, but the invitation email could not be sent. Use "Resend invitation" in the list.`,
+        };
+        setName("");
+        setEmail("");
+        setRoles([]);
+        router.refresh();
+      } else if (response.status === 422 && data.errors) {
+        setErrors(data.errors);
+        requestAnimationFrame(() => summaryRef.current?.focus());
+        result = { kind: "idle" };
+      } else if (response.status === 401 || response.status === 403) {
+        result = { kind: "failed", message: "Only a signed-in Administrator can invite users. Please sign in again." };
+      } else result = { kind: "failed", message: "The invitation could not be sent. Please try again." };
+    } catch {
+      result = { kind: "failed", message: "The invitation could not be sent. Please try again." };
     }
+    action.setState(result);
   }
 
   const input = "mt-1 h-11 w-full border bg-canvas px-3 text-[15px] focus:border-charcoal";

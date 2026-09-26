@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { redirect } from "next/navigation";
 import LoginForm from "@/components/admin/LoginForm";
 import Logo from "@/components/layout/Logo";
-import DraftNote from "@/components/ui/DraftNote";
-import { previewState } from "@/lib/token-pages";
-import { showDrafts } from "@/lib/visibility";
+import { getAdminUser } from "@/lib/admin/session";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
-
-export default async function AdminLoginPage({ searchParams }: { searchParams: SearchParams }) {
-  const preview = previewState(await searchParams, ["mfa"]);
+export default async function AdminLoginPage() {
+  // Already signed in: go straight to the dashboard.
+  if (await getAdminUser()) redirect("/admin");
 
   return (
     <main id="main" className="flex min-h-screen items-center justify-center bg-warm px-4 py-12">
@@ -25,26 +22,9 @@ export default async function AdminLoginPage({ searchParams }: { searchParams: S
           <h1 className="mt-5 font-serif text-[28px] leading-[36px]">Sign in</h1>
           <p className="mt-2 text-[14px] leading-[22px] text-muted">For authorised RNK Legalheads staff only.</p>
           <div className="mt-6">
-            <LoginForm initialStep={preview === "mfa" ? "mfa" : "credentials"} />
+            <LoginForm />
           </div>
         </div>
-
-        {showDrafts && (
-          <div className="mt-6 space-y-3">
-            <DraftNote className="bg-canvas">
-              Review mode: sign-in needs the backend, which is not built yet. The CMS screens can be reviewed without
-              signing in. Nothing in them is saved.
-            </DraftNote>
-            <p className="flex flex-wrap gap-x-6 gap-y-2 text-[14px]">
-              <Link href="/admin" className="inline-flex min-h-11 items-center font-bold underline underline-offset-4">
-                Open the CMS preview
-              </Link>
-              <Link href={preview === "mfa" ? "/admin/login" : "/admin/login?preview=mfa"} className="inline-flex min-h-11 items-center underline underline-offset-4">
-                {preview === "mfa" ? "Show the password step" : "Show the code step"}
-              </Link>
-            </p>
-          </div>
-        )}
       </div>
     </main>
   );
