@@ -8,7 +8,9 @@ import Arrow from "@/components/ui/Arrow";
 import { getContentType, type Field, type FieldValue, type SourceLink, type WorkArea } from "@/lib/admin/config";
 import { thumb } from "@/lib/admin/media";
 import { previewHref } from "@/lib/admin/preview";
-import { editorOptions, getRecord, getRevisions } from "@/lib/admin/records";
+import ReviewHistory from "@/components/admin/ReviewHistory";
+import { editorOptions, getHistory, getRecord } from "@/lib/admin/records";
+import { getAdminUser } from "@/lib/admin/session";
 
 type Params = Promise<{ type: string; id: string }>;
 
@@ -36,8 +38,8 @@ export default async function ReviewRecordPage({ params }: { params: Params }) {
   const found = config && (await getRecord(config.key, id));
   if (!config || !found) notFound();
 
-  const [options, revisions] = await Promise.all([editorOptions(), getRevisions(config.key, found.record.id)]);
-  const latest = revisions[0];
+  const [options, history, user] = await Promise.all([editorOptions(), getHistory(config.key, found.record.id), getAdminUser()]);
+  const latest = history.revisions[0];
   const labelFor = (field: Field, value: string) =>
     field.kind === "services" || field.kind === "people" || field.kind === "publications"
       ? (options[field.kind].find((o) => o.value === value)?.label ?? value)
@@ -150,7 +152,18 @@ export default async function ReviewRecordPage({ params }: { params: Params }) {
         </section>
 
         <aside aria-label="Review decision" className="h-fit border border-line bg-warm px-5 py-5 lg:sticky lg:top-6">
-          <ReviewPanel path={`/${config.key}/${found.record.id}`} />
+          <ReviewPanel
+            path={`/content/${config.key}/${found.record.id}`}
+            status={found.record.status}
+            workflow={found.workflow}
+            roles={user?.roles ?? []}
+            email={user?.email ?? ""}
+            publicHref={found.record.publicHref}
+          />
+          <div className="mt-6 border-t border-line pt-4">
+            <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Review decisions</h2>
+            <ReviewHistory events={history.events} className="mt-3" />
+          </div>
         </aside>
       </div>
     </div>

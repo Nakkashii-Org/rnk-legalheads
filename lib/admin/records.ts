@@ -24,10 +24,23 @@ export type AdminRecord = {
   detail?: string;
   publicHref: string;
   layoutPreview: boolean;
+  /** A published copy is on the website (it may differ from the latest saved text). */
+  live: boolean;
   updatedAt?: string;
 };
 
-type Row = { type: ContentTypeKey; id: string; title: string; status: WorkflowStatus; preview: boolean; detail?: string; author?: string; updatedAt?: string };
+type Row = { type: ContentTypeKey; id: string; title: string; status: WorkflowStatus; preview: boolean; live?: boolean; detail?: string; author?: string; updatedAt?: string };
+
+/** Review and publishing state of one record (phase D). */
+export type Workflow = {
+  revision: number;
+  createdBy?: string;
+  updatedBy?: string;
+  approval?: { revision: number; by: string; at: string };
+  /** Present when the website shows a published copy (empty for records published before copies were kept). */
+  live?: { revision?: number; by?: string; at?: string };
+  campaignId?: string;
+};
 // Raw JSON from the admin API; valuesFor() below reads each field defensively.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rec = Record<string, any>;
@@ -56,6 +69,7 @@ const toRecord = (r: Row): AdminRecord => ({
   detail: r.detail,
   publicHref: `${PUBLIC_BASE[r.type]}/${r.id}`,
   layoutPreview: r.preview,
+  live: Boolean(r.live),
   updatedAt: r.updatedAt,
 });
 
@@ -94,15 +108,15 @@ export async function loadDashboard(): Promise<Loaded<Dashboard>> {
 export async function getRecord(
   type: ContentTypeKey,
   id: string,
-): Promise<{ record: AdminRecord; values: RecordValues; createdBy?: string } | undefined> {
+): Promise<{ record: AdminRecord; values: RecordValues; workflow: Workflow } | undefined> {
   const config = getContentType(type);
   if (!config) return undefined;
-  const res = await adminGet<{ summary: Row; record: Rec }>(`/content/${type}/${encodeURIComponent(id)}`);
+  const res = await adminGet<{ summary: Row; record: Rec; workflow?: Workflow }>(`/content/${type}/${encodeURIComponent(id)}`);
   if (!res.ok) return undefined;
   return {
     record: toRecord(res.data.summary),
     values: { ...emptyValues(config), ...valuesFor(config, res.data.record) },
-    createdBy: typeof res.data.record.createdBy === "string" ? res.data.record.createdBy : undefined,
+    workflow: res.data.workflow ?? { revision: 0 },
   };
 }
 
@@ -262,9 +276,16 @@ function valuesFor(config: ContentTypeConfig, d: Rec): RecordValues {
 }
 
 export type RevisionRow = { number: number; action: string; status: WorkflowStatus; savedBy: string; savedAt: string };
+export type ReviewEventRow = {
+  revision: number;
+  action: "approved" | "changes_requested" | "rejected" | "published" | "unpublished" | "restored" | "email_draft";
+  comment?: string;
+  by: string;
+  at: string;
+};
 
-/** Saved versions of a record, newest first (empty for imported records never saved in the CMS). */
-export async function getRevisions(type: ContentTypeKey, id: string): Promise<RevisionRow[]> {
-  const res = await adminGet<{ revisions: RevisionRow[] }>(`/content/${type}/${encodeURIComponent(id)}/revisions`);
-  return res.ok ? res.data.revisions : [];
+/** Saved versions (newest first; empty for imported records never saved in the CMS) and review decisions. */
+export async function getHistory(type: ContentTypeKey, id: string): Promise<{ revisions: RevisionRow[]; events: ReviewEventRow[] }> {
+  const res = await adminGet<{ revisions: RevisionRow[]; events?: ReviewEventRow[] }>(`/content/${type}/${encodeURIComponent(id)}/revisions`);
+  return res.ok ? { revisions: res.data.revisions, events: res.data.events ?? [] } : { revisions: [], events: [] };
 }

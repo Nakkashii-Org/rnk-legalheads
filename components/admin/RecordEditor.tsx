@@ -19,11 +19,17 @@ import {
   type WorkflowStatus,
 } from "@/lib/admin/config";
 import { previewHref } from "@/lib/admin/preview";
-import type { RevisionRow } from "@/lib/admin/records";
+import ReviewHistory from "@/components/admin/ReviewHistory";
+import type { ReviewEventRow, RevisionRow, Workflow } from "@/lib/admin/records";
+import type { AdminRole } from "@/lib/admin/session";
 import { useAdminAction, type AdminResult } from "@/lib/admin/request";
 
-/** Approved and published records can't be edited until publishing arrives (phase D). */
-const LOCKED: WorkflowStatus[] = ["approved", "published", "unpublished", "archived"];
+/** A rejected record is archived; it is restored as a draft before it can be edited again. */
+const LOCKED: WorkflowStatus[] = ["archived"];
+/** States from which "Send for review" makes sense (an unchanged approved or published revision needs no new review). */
+const SENDABLE: WorkflowStatus[] = ["draft", "changes_requested", "unpublished"];
+
+const when = (at?: string) => (at ? new Date(at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "");
 
 /**
  * A03 / A05 / A06 editor. Save draft needs only a title and URL slug; Send for review runs every
@@ -38,6 +44,9 @@ export default function RecordEditor({
   initialValues,
   options,
   revisions = [],
+  events = [],
+  workflow = { revision: 0 },
+  roles = [],
   canDelete = false,
 }: {
   typeKey: ContentTypeKey;
@@ -48,6 +57,9 @@ export default function RecordEditor({
   initialValues: RecordValues;
   options: EditorOptions;
   revisions?: RevisionRow[];
+  events?: ReviewEventRow[];
+  workflow?: Workflow;
+  roles?: AdminRole[];
   canDelete?: boolean;
 }) {
   const config = getContentType(typeKey)!;
@@ -61,6 +73,7 @@ export default function RecordEditor({
   const action = useAdminAction();
   const router = useRouter();
   const locked = LOCKED.includes(status);
+  const canPublish = roles.includes("publisher") || roles.includes("admin");
 
   const slugField = allFields(config).find((f) => f.kind === "slug");
   const title = (values[config.titleField] as string) || `Untitled ${config.singular.toLowerCase()}`;
@@ -131,6 +144,10 @@ export default function RecordEditor({
     );
     if (sent) show(sent);
     else if (id !== recordId) show(id!);
+  }
+
+  async function restore() {
+    if (await action.run("Restoring", `/content/${typeKey}/${recordId}/restore`, { method: "POST" }, "Restored as a draft. You can edit it again.")) router.refresh();
   }
 
   async function deleteDraft() {
@@ -211,18 +228,74 @@ export default function RecordEditor({
                   Already sent for review, so it can&apos;t be sent again. Saving a change takes it back to Draft; send it again after that.
                 </p>
               )}
-              {locked && (
+              {status === "approved" && (
                 <p className="text-[12px] leading-[18px] text-muted">
-                  This record is {status.replace("_", " ")} and can&apos;t be edited yet. Editing live content arrives with publishing.
+                  Revision {workflow.approval?.revision} was approved{workflow.approval?.by ? ` by ${workflow.approval.by}` : ""}. A publisher can now publish it. Saving a
+                  change withdraws the approval.
                 </p>
               )}
-              <button type="button" onClick={sendForReview} disabled={action.busy || locked || status === "in_review"} className="btn btn-secondary justify-center">
+              {status === "published" && (
+                <p className="text-[12px] leading-[18px] text-muted">
+                  This version is live. Saving a change creates a new draft; the website keeps showing this version until the new one is
+                  approved and published.
+                </p>
+              )}
+              {locked && (
+                <p className="text-[12px] leading-[18px] text-muted">
+                  This record was rejected and archived. {canDelete ? "Restore it as a draft to edit it again." : "Its creator or an Administrator can restore it."}
+                </p>
+              )}
+              {locked && canDelete && (
+                <button type="button" onClick={restore} disabled={action.busy} className="btn btn-secondary justify-center">
+                  Restore as draft
+                </button>
+              )}
+              <button type="button" onClick={sendForReview} disabled={action.busy || !SENDABLE.includes(status)} className="btn btn-secondary justify-center">
                 Send for review
               </button>
             </div>
 
             <ActionNotice state={action.state} className="mt-4" />
           </section>
+
+          {workflow.live && publicHref && (
+            <section className="border border-charcoal px-5 py-5">
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">On the website</h2>
+              <p className="mt-2 text-[13px] leading-5">
+                {workflow.live.revision !== undefined ? (
+                  <>
+                    Revision {workflow.live.revision} is live
+                    {workflow.live.at && (
+                      <>
+                        {" "}
+                        since <time dateTime={workflow.live.at}>{when(workflow.live.at)}</time>
+                      </>
+                    )}
+                    {workflow.live.by && ` (published by ${workflow.live.by})`}.
+                  </>
+                ) : (
+                  "A published version is live."
+                )}
+              </p>
+              {status !== "published" && (
+                <p className="mt-2 text-[12px] leading-[18px] text-muted">
+                  Newer changes are saved here but not public yet. They appear after review and publishing.
+                </p>
+              )}
+              <a href={publicHref} target="_blank" rel="noopener" className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-[13px] font-bold underline underline-offset-4 md:min-h-0">
+                View the live page <Arrow />
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </section>
+          )}
+
+          {events[0]?.action === "changes_requested" && status === "changes_requested" && (
+            <section role="note" className="border-l-2 border-action bg-warm px-5 py-4">
+              <h2 className="text-[13px] font-bold">Changes requested by {events[0].by}</h2>
+              <p className="mt-1 whitespace-pre-line text-[13px] leading-5">{events[0].comment}</p>
+              <p className="mt-2 text-[12px] leading-[18px] text-muted">Make the changes, save, then send it for review again.</p>
+            </section>
+          )}
 
           <section className="border border-line px-5 py-5">
             <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Publishing steps</h2>
@@ -241,7 +314,7 @@ export default function RecordEditor({
                 </li>
               ))}
             </ol>
-            <p className="mt-3 text-[12px] leading-[18px] text-muted">Editing an approved or published record needs review again.</p>
+            <p className="mt-3 text-[12px] leading-[18px] text-muted">Editing an approved or published record needs review again; the live version stays until then.</p>
             {!isNew && (
               <Link href={`/admin/review/${typeKey}/${recordId}`} className="mt-3 inline-flex min-h-11 items-center text-[13px] font-bold underline underline-offset-4 md:min-h-0">
                 Open the reviewer view
@@ -253,17 +326,37 @@ export default function RecordEditor({
             <section className="border border-line px-5 py-5">
               <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Email</h2>
               <p className="mt-2 text-[13px] leading-5 text-muted">
-                Publishing the web issue emails no one. After approval, create a draft campaign in Brevo; the Email
-                operator tests and sends it there.
+                Publishing the web issue emails no one. Once it is published, a publisher creates a draft campaign in Brevo; the
+                email is tested and sent from Brevo.
               </p>
-              <button
-                type="button"
-                disabled={action.busy}
-                onClick={() => action.run("Creating email draft", `/newsletters/${recordId}/email-draft`, { method: "POST" }, "Draft campaign created in Brevo. Nothing has been sent.")}
-                className="btn btn-secondary mt-3 w-full justify-center"
-              >
-                Create email draft
-              </button>
+              {workflow.campaignId ? (
+                <p className="mt-3 text-[13px] leading-5">
+                  Email draft created in Brevo (campaign <strong>{workflow.campaignId}</strong>). Open it in Brevo to test and send.
+                </p>
+              ) : !canPublish ? (
+                <p className="mt-3 text-[12px] leading-[18px] text-muted">Only a Publisher or Administrator can create the email draft.</p>
+              ) : !workflow.live ? (
+                <p className="mt-3 text-[12px] leading-[18px] text-muted">Publish the issue on the website first.</p>
+              ) : (
+                <button
+                  type="button"
+                  disabled={action.busy}
+                  onClick={async () => {
+                    if (await action.run("Creating email draft", `/content/newsletters/${recordId}/email-draft`, { method: "POST" }, "Draft campaign created in Brevo. Nothing has been sent."))
+                      router.refresh();
+                  }}
+                  className="btn btn-secondary mt-3 w-full justify-center"
+                >
+                  Create email draft
+                </button>
+              )}
+            </section>
+          )}
+
+          {!isNew && (
+            <section className="border border-line px-5 py-5">
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Review decisions</h2>
+              <ReviewHistory events={events} className="mt-3" />
             </section>
           )}
 

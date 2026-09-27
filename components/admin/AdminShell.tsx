@@ -125,8 +125,8 @@ export default function AdminShell({ user, children }: { user: AdminUser; childr
       </a>
 
       <div role="note" className="bg-charcoal px-4 py-2 text-center text-[12px] leading-[18px] text-canvas">
-        <strong>Signed in.</strong>{" "}Drafts, review requests, media and settings are saved. Approving and publishing arrive in the next
-        phase: nothing goes live on the website yet.
+        <strong>Signed in.</strong>{" "}Only published content appears on the website. Drafts and changes stay private until a legal
+        reviewer approves them and a publisher publishes them.
       </div>
 
       <header className="flex h-16 items-center justify-between gap-4 border-b border-line bg-canvas px-4 md:px-6">

@@ -114,8 +114,9 @@ export default async function ContentListPage({ params, searchParams }: { params
                   {r.layoutPreview && " · Layout preview"}
                 </span>
               </div>
-              <div>
+              <div className="flex flex-wrap items-center gap-2">
                 <StatusBadge status={r.status} />
+                {r.live && r.status !== "published" && <span className="text-[12px] text-muted">Live version on the website</span>}
               </div>
               <div className="text-[13px] text-muted">{r.author ? `${r.author} · ${r.detail}` : r.detail}</div>
               <div className="md:text-right">

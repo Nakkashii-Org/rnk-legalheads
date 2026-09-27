@@ -47,7 +47,11 @@ export function useAdminAction() {
     else if (serverMessage) setState({ kind: "failed", message: serverMessage });
     else if (result.status === 403) setState({ kind: "failed", message: "You do not have permission to do this." });
     else if (result.status === 404) setState({ kind: "failed", message: `${label} failed. ${NOT_CONNECTED}` });
-    else setState({ kind: "failed", message: `${label} failed. Please try again; your work is still on this page.` });
+    else
+      setState({
+        kind: "failed",
+        message: `${label} failed (${result.status ? `server answered ${result.status}` : "the server could not be reached"}). Please try again; your work is still on this page.`,
+      });
     return result;
   }
 
