@@ -225,3 +225,8 @@ html {
     color: var(--color-action);
   }
 }
+
+/* Bar Council disclaimer: hidden before paint once the visitor has agreed (components/layout/DisclaimerGate.tsx). */
+html[data-disclaimer="ok"] #site-disclaimer {
+  display: none;
+}
