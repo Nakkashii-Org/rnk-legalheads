@@ -7,18 +7,11 @@ import {
   type RecordValues,
   type WorkflowStatus,
 } from "@/lib/admin/config";
-import {
-  publicationHref,
-  publicationTypeMeta,
-  type BodyBlock,
-  type Publication,
-  type PublicationType,
-} from "@/lib/content/publications";
-import type { Content } from "@/lib/content/store";
+import { adminGet } from "@/lib/admin/session";
 
 /**
- * Until the CMS admin APIs exist (phase C), the admin UI reads the website's content snapshot.
- * Every record is unapproved, so they show as drafts; nothing here is written back.
+ * CMS data (C1): read from the backend's /api/admin/* APIs with the signed-in user's session.
+ * Records come straight from MongoDB in every workflow status, including drafts.
  */
 
 export type AdminRecord = {
@@ -30,246 +23,206 @@ export type AdminRecord = {
   detail?: string;
   publicHref: string;
   layoutPreview: boolean;
+  updatedAt?: string;
 };
 
-const publicationTypeFor: Partial<Record<ContentTypeKey, PublicationType>> = {
-  articles: "article",
-  judgments: "judgment",
-  "legal-updates": "update",
+type Row = { type: ContentTypeKey; id: string; title: string; status: WorkflowStatus; preview: boolean; detail?: string; author?: string; updatedAt?: string };
+// Raw JSON from the admin API; valuesFor() below reads each field defensively.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Rec = Record<string, any>;
+type BodyBlock = { kind: "h2" | "h3" | "p" | "ul"; text?: string; items?: string[] };
+
+export type Loaded<T> = { ok: true; data: T } | { ok: false; status: number };
+
+const PUBLIC_BASE: Record<ContentTypeKey, string> = {
+  articles: "/articles",
+  judgments: "/recent-judgments",
+  "legal-updates": "/legal-updates",
+  newsletters: "/newsletters",
+  services: "/services",
+  people: "/people",
+  industries: "/industries",
+  jobs: "/careers",
 };
 
-const statusOf = (approved: boolean): WorkflowStatus => (approved ? "published" : "draft");
+const toRecord = (r: Row): AdminRecord => ({
+  type: r.type,
+  id: r.id,
+  title: r.title,
+  status: r.status,
+  author: r.author,
+  detail: r.detail,
+  publicHref: `${PUBLIC_BASE[r.type]}/${r.id}`,
+  layoutPreview: r.preview,
+  updatedAt: r.updatedAt,
+});
 
-const escapeHtml = (text: string) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+/** One content type, optionally filtered by status and a search text. */
+export async function listRecords(type: ContentTypeKey, filters: { status?: string; q?: string } = {}): Promise<Loaded<{ items: AdminRecord[]; total: number }>> {
+  const qs = new URLSearchParams();
+  if (filters.status) qs.set("status", filters.status);
+  if (filters.q) qs.set("q", filters.q);
+  const res = await adminGet<{ items: Row[]; total: number }>(`/content/${type}${qs.size ? `?${qs}` : ""}`);
+  return res.ok ? { ok: true, data: { items: res.data.items.map(toRecord), total: res.data.total } } : res;
+}
 
-function blocksToHtml(blocks: BodyBlock[]): string {
+/** Records of every type with one status (the review queue). */
+export async function listByStatus(status: WorkflowStatus): Promise<Loaded<AdminRecord[]>> {
+  const res = await adminGet<{ items: Row[] }>(`/content?status=${status}`);
+  return res.ok ? { ok: true, data: res.data.items.map(toRecord) } : res;
+}
+
+export type Dashboard = {
+  counts: Record<WorkflowStatus, number>;
+  total: number;
+  recentDrafts: AdminRecord[];
+  /** In review or changes requested, newest first. */
+  reviewRequests: AdminRecord[];
+  inbox: { enquiries: number; applications: number } | null;
+};
+
+export async function loadDashboard(): Promise<Loaded<Dashboard>> {
+  const res = await adminGet<Omit<Dashboard, "recentDrafts" | "reviewRequests"> & { recentDrafts: Row[]; reviewRequests: Row[] }>("/dashboard");
+  return res.ok
+    ? { ok: true, data: { ...res.data, recentDrafts: res.data.recentDrafts.map(toRecord), reviewRequests: (res.data.reviewRequests ?? []).map(toRecord) } }
+    : res;
+}
+
+/** One record, mapped into the editor's field values. */
+export async function getRecord(type: ContentTypeKey, id: string): Promise<{ record: AdminRecord; values: RecordValues } | undefined> {
+  const config = getContentType(type);
+  if (!config) return undefined;
+  const res = await adminGet<{ summary: Row; record: Rec }>(`/content/${type}/${encodeURIComponent(id)}`);
+  if (!res.ok) return undefined;
+  return { record: toRecord(res.data.summary), values: { ...emptyValues(config), ...valuesFor(config, res.data.record) } };
+}
+
+/** Choices for the editors' relationship pickers. */
+export async function editorOptions(): Promise<{ services: Option[]; people: Option[]; publications: Option[] }> {
+  const res = await adminGet<{ services: Option[]; people: Option[]; publications: Option[] }>("/options");
+  return res.ok ? res.data : { services: [], people: [], publications: [] };
+}
+
+// ---- Database record → editor values ----
+
+const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+function blocksToHtml(blocks: BodyBlock[] = []): string {
   return blocks
-    .map((b) =>
-      b.kind === "ul" ? `<ul>${b.items.map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : `<${b.kind}>${escapeHtml(b.text)}</${b.kind}>`,
-    )
+    .map((b) => (b.kind === "ul" ? `<ul>${(b.items ?? []).map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : `<${b.kind}>${escapeHtml(b.text ?? "")}</${b.kind}>`))
     .join("");
 }
 
-const paragraphsToHtml = (paragraphs: string[]) => paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
+const paragraphsToHtml = (paragraphs: string[] = []) => paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("");
+const s = (v: unknown) => (typeof v === "string" ? v : "");
 
-export function listRecords(content: Content, type: ContentTypeKey): AdminRecord[] {
-  const pubType = publicationTypeFor[type];
-  if (pubType) {
-    return content.publicPublications(pubType).map((p) => ({
-      type,
-      id: p.slug,
-      title: p.title,
-      status: statusOf(p.approved),
-      author: p.author.name,
-      detail: p.publishedAt ?? "Not published",
-      publicHref: publicationHref(p),
-      layoutPreview: Boolean(p.preview),
-    }));
-  }
-  switch (type) {
-    case "services":
-      return content.publicServices().map((s) => ({
-        type,
-        id: s.slug,
-        title: s.title,
-        status: statusOf(s.approved),
-        detail: s.hold ? "Publication hold" : s.id,
-        publicHref: `/services/${s.slug}`,
-        layoutPreview: false,
-      }));
-    case "people":
-      return content.publicPeople().map((p) => ({
-        type,
-        id: p.slug,
-        title: p.name,
-        status: statusOf(p.approved),
-        detail: p.role,
-        publicHref: `/people/${p.slug}`,
-        layoutPreview: Boolean(p.preview),
-      }));
-    case "industries":
-      return content.publicIndustries().map((i) => ({
-        type,
-        id: i.slug,
-        title: i.name,
-        status: statusOf(i.approved),
-        detail: `${i.serviceIds.length} services`,
-        publicHref: `/industries/${i.slug}`,
-        layoutPreview: false,
-      }));
-    case "newsletters":
-      return content.publicIssues().map((n) => ({
-        type,
-        id: n.slug,
-        title: n.title,
-        status: statusOf(n.approved),
-        detail: `${n.items.length} publications`,
-        publicHref: `/newsletters/${n.slug}`,
-        layoutPreview: Boolean(n.preview),
-      }));
-    case "jobs":
-      return content.publicJobs().map((j) => ({
-        type,
-        id: j.slug,
-        title: j.title,
-        status: statusOf(j.approved),
-        detail: j.status === "open" ? "Open" : "Closed",
-        publicHref: `/careers/${j.slug}`,
-        layoutPreview: Boolean(j.preview),
-      }));
-    default:
-      return [];
-  }
-}
-
-export function getRecord(content: Content, type: ContentTypeKey, id: string): { record: AdminRecord; values: RecordValues } | undefined {
-  const record = listRecords(content, type).find((r) => r.id === id);
-  const config = getContentType(type);
-  if (!record || !config) return undefined;
-  return { record, values: { ...emptyValues(config), ...valuesFor(content, config, id) } };
-}
-
-function publicationValues(p: Publication): RecordValues {
-  const base: RecordValues = {
-    title: p.title,
-    slug: p.slug,
-    summary: p.summary,
-    body: blocksToHtml(p.body),
-    author: p.author.personSlug ? [p.author.personSlug] : [],
-    services: p.serviceIds,
-    sources: p.sources.length ? p.sources.map((s) => ({ label: s.label, url: s.url ?? "" })) : [{ label: "", url: "" }],
-  };
-  if (p.type === "judgment")
-    return {
-      ...base,
-      caseName: p.caseName,
-      court: p.court,
-      caseNumber: p.caseNumber,
-      neutralCitation: p.neutralCitation ?? "",
-      decisionDate: p.decisionDate ?? "",
-      officialSourceUrl: p.officialSourceUrl ?? "",
-      proceduralStatus: p.proceduralStatus,
-      sourceChecked: Boolean(p.sourceCheckedAt),
-    };
-  if (p.type === "update")
-    return {
-      ...base,
-      issuer: p.issuer,
-      instrument: p.instrument,
-      status: p.status,
-      instrumentPublishedOn: p.instrumentPublishedOn ?? "",
-      effectiveDate: p.effectiveDate ?? "",
-      officialSourceUrl: p.officialSourceUrl ?? "",
-      sourceChecked: Boolean(p.sourceCheckedAt),
-    };
-  return base;
-}
-
-function valuesFor(content: Content, config: ContentTypeConfig, id: string): RecordValues {
-  const pubType = publicationTypeFor[config.key];
-  if (pubType) {
-    const p = content.publicPublications(pubType).find((x) => x.slug === id);
-    return p ? publicationValues(p) : {};
-  }
+function valuesFor(config: ContentTypeConfig, d: Rec): RecordValues {
   switch (config.key) {
-    case "services": {
-      const s = content.publicServices().find((x) => x.slug === id);
-      if (!s) return {};
-      const d = content.serviceDetail(s.id);
-      const bySlug = new Map(content.publicServices().map((x) => [x.id, x.slug]));
-      return {
-        title: s.title,
-        slug: s.slug,
-        group: s.group,
-        summary: s.summary,
-        overview: d?.overview ?? "",
-        scope: d?.scope ?? [],
-        related: (d?.related ?? []).map((rid) => bySlug.get(rid) ?? "").filter(Boolean),
-        hold: Boolean(s.hold),
-        jurisdiction: "India",
+    case "articles":
+    case "judgments":
+    case "legal-updates": {
+      const base: RecordValues = {
+        title: s(d.title),
+        slug: s(d.slug),
+        summary: s(d.summary),
+        body: blocksToHtml(d.body),
+        author: d.author?.personSlug ? [d.author.personSlug] : [],
+        services: d.serviceIds ?? [],
+        sources: d.sources?.length ? d.sources.map((x: Rec) => ({ label: s(x.label), url: s(x.url) })) : [{ label: "", url: "" }],
+        image: "",
       };
+      if (config.key === "judgments")
+        return {
+          ...base,
+          caseName: s(d.caseName),
+          court: s(d.court),
+          caseNumber: s(d.caseNumber),
+          neutralCitation: s(d.neutralCitation),
+          decisionDate: s(d.decisionDate),
+          officialSourceUrl: s(d.officialSourceUrl),
+          proceduralStatus: s(d.proceduralStatus),
+          sourceChecked: Boolean(d.sourceCheckedAt),
+        };
+      if (config.key === "legal-updates")
+        return {
+          ...base,
+          issuer: s(d.issuer),
+          instrument: s(d.instrument),
+          status: s(d.instrumentStatus),
+          instrumentPublishedOn: s(d.instrumentPublishedOn),
+          effectiveDate: s(d.effectiveDate),
+          officialSourceUrl: s(d.officialSourceUrl),
+          sourceChecked: Boolean(d.sourceCheckedAt),
+        };
+      return base;
     }
-    case "people": {
-      const p = content.publicPeople().find((x) => x.slug === id);
-      if (!p) return {};
+    case "services":
       return {
-        name: p.name,
-        slug: p.slug,
-        role: p.role,
-        practiceSummary: p.practiceSummary,
-        biography: paragraphsToHtml(p.biography),
-        priorExperience: p.priorExperience ?? "",
-        qualifications: p.qualifications ?? "",
-        enrolment: p.enrolment ?? "",
-        languages: p.languages ?? "",
-        office: p.office ?? "",
-        services: serviceSlugs(content, p.serviceIds),
+        title: s(d.title),
+        slug: s(d.slug),
+        group: s(d.group),
+        summary: s(d.summary),
+        overview: s(d.overview),
+        scope: d.scope ?? [],
+        related: d.related ?? [],
+        people: [],
+        owner: s(d.owner),
+        jurisdiction: s(d.jurisdiction),
+        hold: Boolean(d.hold),
       };
-    }
-    case "industries": {
-      const i = content.publicIndustries().find((x) => x.slug === id);
-      if (!i) return {};
+    case "people":
       return {
-        name: i.name,
-        slug: i.slug,
-        summary: i.summary,
-        intro: i.intro ?? "",
-        overview: i.overview ?? "",
-        workAreas: i.workAreas?.length ? i.workAreas : [{ title: "", text: "" }],
-        services: serviceSlugs(content, i.serviceIds),
+        name: s(d.name),
+        slug: s(d.slug),
+        role: s(d.role),
+        practiceSummary: s(d.practiceSummary),
+        biography: paragraphsToHtml(d.biography),
+        priorExperience: s(d.priorExperience),
+        qualifications: s(d.qualifications),
+        enrolment: s(d.enrolment),
+        languages: s(d.languages),
+        office: s(d.office),
+        portraitConsent: Boolean(d.portraitConsent),
+        services: d.serviceIds ?? [],
       };
-    }
-    case "newsletters": {
-      const n = content.publicIssues().find((x) => x.slug === id);
-      if (!n) return {};
+    case "industries":
       return {
-        title: n.title,
-        slug: n.slug,
-        focus: n.focus,
-        issueDate: n.issueDate ?? "",
-        introduction: n.introduction,
-        items: n.items.map((item) => `${item.type}:${item.slug}`),
+        name: s(d.name),
+        slug: s(d.slug),
+        summary: s(d.summary),
+        intro: s(d.intro),
+        overview: s(d.overview),
+        workAreas: d.workAreas?.length ? d.workAreas : [{ title: "", text: "" }],
+        services: d.serviceIds ?? [],
+        people: [],
       };
-    }
-    case "jobs": {
-      const j = content.publicJobs().find((x) => x.slug === id);
-      if (!j) return {};
+    case "newsletters":
       return {
-        jobId: j.jobId,
-        title: j.title,
-        slug: j.slug,
-        practice: j.practice,
-        location: j.location,
-        workArrangement: j.workArrangement,
-        experience: j.experience,
-        summary: j.summary,
-        responsibilities: j.responsibilities,
-        qualifications: j.qualifications,
-        applicationInstructions: j.applicationInstructions,
-        openedOn: j.openedOn ?? "",
-        closesOn: j.closesOn ?? "",
-        jobStatus: j.status,
+        title: s(d.title),
+        slug: s(d.slug),
+        focus: s(d.focus),
+        issueDate: s(d.issueDate),
+        introduction: s(d.introduction),
+        items: (d.items ?? []).map((i: Rec) => `${i.type}:${i.slug}`),
       };
-    }
+    case "jobs":
+      return {
+        jobId: s(d.jobId),
+        title: s(d.title),
+        slug: s(d.slug),
+        practice: s(d.practice),
+        location: s(d.location),
+        workArrangement: s(d.workArrangement),
+        experience: s(d.experience),
+        summary: s(d.summary),
+        responsibilities: d.responsibilities ?? [],
+        qualifications: d.qualifications ?? [],
+        applicationInstructions: s(d.applicationInstructions),
+        openedOn: s(d.openedOn),
+        closesOn: s(d.closesOn),
+        jobStatus: s(d.vacancyStatus) || "open",
+      };
     default:
       return {};
   }
-}
-
-function serviceSlugs(content: Content, ids: string[]): string[] {
-  const bySlug = new Map(content.publicServices().map((s) => [s.id, s.slug]));
-  return ids.map((id) => bySlug.get(id) ?? "").filter(Boolean);
-}
-
-/** Picker options for relationship fields. */
-export function editorOptions(content: Content): { services: Option[]; people: Option[]; publications: Option[] } {
-  return {
-    services: content.publicServices().map((s) => ({ value: s.slug, label: s.title })),
-    people: content.publicPeople().map((p) => ({ value: p.slug, label: p.name })),
-    publications: content.publicPublications().map((p) => ({
-      value: `${p.type}:${p.slug}`,
-      label: `${publicationTypeMeta[p.type].label}: ${p.title}`,
-    })),
-  };
 }

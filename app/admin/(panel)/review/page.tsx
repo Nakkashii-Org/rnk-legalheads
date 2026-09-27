@@ -3,9 +3,8 @@ import Link from "next/link";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import EmptyState from "@/components/admin/EmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
-import { contentTypes, type WorkflowStatus } from "@/lib/admin/config";
-import { listRecords } from "@/lib/admin/records";
-import { getContent } from "@/lib/content/source";
+import type { WorkflowStatus } from "@/lib/admin/config";
+import { listByStatus, type AdminRecord } from "@/lib/admin/records";
 
 export const metadata: Metadata = { title: "Review queue" };
 
@@ -21,9 +20,13 @@ const tabs: { key: string; label: string; status: WorkflowStatus; empty: string 
 export default async function ReviewQueuePage({ searchParams }: { searchParams: SearchParams }) {
   const raw = (await searchParams).tab;
   const current = tabs.find((t) => t.key === (Array.isArray(raw) ? raw[0] : raw)) ?? tabs[0];
-  const content = await getContent();
-  const records = contentTypes.flatMap((t) => listRecords(content, t.key));
-  const rows = records.filter((r) => r.status === current.status);
+  const lists = await Promise.all(tabs.map((t) => listByStatus(t.status)));
+  const byStatus: Record<string, AdminRecord[]> = {};
+  tabs.forEach((t, n) => {
+    const r = lists[n]!;
+    byStatus[t.status] = r.ok ? r.data : [];
+  });
+  const rows = byStatus[current.status] ?? [];
 
   return (
     <div className="space-y-6">
@@ -37,7 +40,7 @@ export default async function ReviewQueuePage({ searchParams }: { searchParams: 
         <ul className="flex gap-6 whitespace-nowrap border-b border-line">
           {tabs.map((tab) => {
             const active = tab === current;
-            const count = records.filter((r) => r.status === tab.status).length;
+            const count = byStatus[tab.status]?.length ?? 0;
             return (
               <li key={tab.key}>
                 <Link

@@ -8,7 +8,6 @@ import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, WORKFLOW_STATUSES, type WorkflowStatus } from "@/lib/admin/config";
 import { listRecords } from "@/lib/admin/records";
-import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ type: string }>;
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -28,11 +27,11 @@ export default async function ContentListPage({ params, searchParams }: { params
   const statusParam = first(sp.status);
   const status = WORKFLOW_STATUSES.some((s) => s.value === statusParam) ? (statusParam as WorkflowStatus) : undefined;
 
-  const all = listRecords(await getContent(), config.key);
-  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const rows = all.filter(
-    (r) => (!status || r.status === status) && words.every((w) => `${r.title} ${r.id} ${r.detail ?? ""}`.toLowerCase().includes(w)),
-  );
+  const result = await listRecords(config.key, { status, q: query });
+  if (!result.ok)
+    return <EmptyState title={`${config.plural} can't be loaded right now`}>Please refresh the page in a minute.</EmptyState>;
+  const rows = result.data.items;
+  const total = result.data.total;
 
   const selectClass = "h-11 min-w-0 border border-[#8a8782] bg-canvas px-3 text-[14px] focus:border-charcoal";
 
@@ -41,7 +40,7 @@ export default async function ContentListPage({ params, searchParams }: { params
       <AdminPageHeader
         crumbs={[{ label: "Dashboard", href: "/admin" }, { label: config.plural }]}
         title={config.plural}
-        description={`${all.length} ${all.length === 1 ? "record" : "records"}. Open a record to edit it, preview it or send it for review.`}
+        description={`${total} ${total === 1 ? "record" : "records"}. Open a record to edit it, preview it or send it for review.`}
         actions={
           <Link href={`/admin/${config.key}/new`} className="btn btn-primary">
             New {config.singular.toLowerCase()} <span aria-hidden="true">+</span>
@@ -86,10 +85,10 @@ export default async function ContentListPage({ params, searchParams }: { params
       </Form>
 
       <p role="status" className="text-[12px] uppercase tracking-[0.12em] text-muted">
-        Showing {rows.length} of {all.length}
+        Showing {rows.length} of {total}
       </p>
 
-      {all.length === 0 ? (
+      {total === 0 ? (
         <EmptyState title={`No ${config.plural.toLowerCase()} yet`}>
           Create the first {config.singular.toLowerCase()} with the button above.
         </EmptyState>
