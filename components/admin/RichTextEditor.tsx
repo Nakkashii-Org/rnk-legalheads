@@ -47,8 +47,12 @@ export default function RichTextEditor({
   function run(c: Command) {
     let arg = c.arg;
     if (c.command === "createLink") {
-      const url = window.prompt("Link address (must start with https://)", "https://");
-      if (!url || !/^https?:\/\/\S+\.\S+/.test(url)) return;
+      const url = window.prompt("Link address: https://… for a website, mailto:… for an email, or /… for a page on this site", "https://")?.trim();
+      if (!url) return;
+      if (!/^(https:\/\/\S+\.\S+|mailto:\S+@\S+\.\S+|\/(?![/\\])\S*)$/i.test(url)) {
+        window.alert("Links must start with https:// (or mailto: for an email address, or / for a page on this site).");
+        return;
+      }
       arg = url;
     }
     const el = ref.current;

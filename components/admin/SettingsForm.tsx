@@ -5,11 +5,11 @@ import ActionNotice from "@/components/admin/ActionNotice";
 import ErrorSummary from "@/components/forms/ErrorSummary";
 import { useAdminAction } from "@/lib/admin/request";
 
+/** Field names match the backend (PATCH /api/admin/settings). The website domain is set in the server environment. */
 export type SettingsValues = {
-  brandName: string;
+  name: string;
   legalEntity: string;
   established: string;
-  domain: string;
   statement: string;
   disclaimer: string;
   address: string;
@@ -24,10 +24,9 @@ const groups: { title: string; fields: { key: Key; label: string; rows?: number;
   {
     title: "Firm identity",
     fields: [
-      { key: "brandName", label: "Brand name", required: true },
+      { key: "name", label: "Brand name", required: true },
       { key: "legalEntity", label: "Legal entity", required: true },
       { key: "established", label: "Established year", required: true },
-      { key: "domain", label: "Website domain", required: true, hint: "One canonical host, e.g. https://www.rnklegalheads.com" },
     ],
   },
   {
@@ -62,13 +61,19 @@ export default function SettingsForm({ initial }: { initial: SettingsValues }) {
       for (const f of group.fields) if (f.required && !values[f.key].trim()) found[f.key] = `${f.label} is required.`;
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) found.email = "Enter a valid email address.";
     if (values.established && !/^(19|20)\d{2}$/.test(values.established.trim())) found.established = "Enter a four-digit year.";
-    if (values.domain && !/^https:\/\/\S+\.\S+$/.test(values.domain.trim())) found.domain = "Enter the full address starting with https://";
     setErrors(found);
     if (Object.keys(found).length) {
       requestAnimationFrame(() => summaryRef.current?.focus());
       return;
     }
-    await action.run("Saving settings", "/settings", { method: "PATCH", body: JSON.stringify(values) }, "Settings saved. The header, footer and contact page have been refreshed.");
+    const result = await action.call("Saving settings", "/settings", { method: "PATCH", body: JSON.stringify(values) }, "Settings saved. The header, footer and contact page now show them.");
+    if (result.status === 422 && result.data?.errors) {
+      setErrors(result.data.errors as Partial<Record<Key, string>>);
+      requestAnimationFrame(() => summaryRef.current?.focus());
+      return;
+    }
+    // Clear the website's content cache so the change shows at once, not after up to 5 minutes.
+    if (result.ok) await fetch("/admin/refresh-site", { method: "POST" }).catch(() => undefined);
   }
 
   const input = "mt-1.5 w-full border bg-canvas px-3 text-[15px] focus:border-charcoal";

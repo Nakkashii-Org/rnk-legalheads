@@ -6,7 +6,15 @@ export default function Portrait({ person, sizes }: { person: Person; sizes: str
   if (person.portrait) {
     return (
       <div className="relative aspect-[4/3] overflow-hidden bg-warm">
-        <Image src={person.portrait.src} alt={person.portrait.alt} fill sizes={sizes} className="object-cover grayscale-[15%]" />
+        <Image
+          src={person.portrait.src}
+          alt={person.portrait.alt}
+          fill
+          sizes={sizes}
+          // Development images come from the backend through /api; Cloudinary images are optimised.
+          unoptimized={person.portrait.src.startsWith("/api/")}
+          className="object-cover grayscale-[15%]"
+        />
       </div>
     );
   }

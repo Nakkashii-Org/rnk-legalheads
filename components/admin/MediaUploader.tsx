@@ -1,18 +1,13 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ActionNotice from "@/components/admin/ActionNotice";
+import { LICENCES } from "@/lib/admin/media";
 import { useAdminAction } from "@/lib/admin/request";
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif";
 const MAX_BYTES = 10 * 1024 * 1024;
-
-const LICENCES = [
-  { value: "own", label: "Firm's own photograph" },
-  { value: "consent", label: "Portrait with the person's consent" },
-  { value: "licensed", label: "Licensed image" },
-  { value: "original", label: "Original illustration" },
-];
 
 type Pending = {
   key: string;
@@ -32,6 +27,7 @@ export default function MediaUploader() {
   const [pending, setPending] = useState<Pending[]>([]);
   const [rejected, setRejected] = useState<string[]>([]);
   const action = useAdminAction();
+  const router = useRouter();
 
   // Release preview object URLs when the page closes (removed items are released as they go).
   const pendingRef = useRef(pending);
@@ -91,8 +87,16 @@ export default function MediaUploader() {
       body.append(`files`, p.file);
       body.append(`meta[${i}]`, JSON.stringify({ title: p.title, alt: p.decorative ? "" : p.alt, decorative: p.decorative, credit: p.credit, licence: p.licence }));
     });
-    const ok = await action.run("Uploading", "/media", { method: "POST", body }, "Uploaded. Responsive sizes are being generated.");
-    if (ok) setPending([]);
+    const result = await action.call("Uploading", "/media", { method: "POST", body }, "Uploaded. The images are in the library below, ready to choose in any editor.");
+    // The server checks every file again (real file type, details); its problems are shown per image.
+    const serverErrors = (result.data?.errors ?? {}) as Record<string, string>;
+    if (result.status === 422 && Object.keys(serverErrors).length)
+      setPending((prev) => prev.map((p, i) => ({ ...p, error: serverErrors[String(i)] ?? serverErrors.files })));
+    if (result.ok) {
+      checked.forEach((p) => URL.revokeObjectURL(p.url));
+      setPending([]);
+      router.refresh();
+    }
   }
 
   const input = "mt-1 h-11 w-full border border-[#8a8782] bg-canvas px-3 text-[14px] focus:border-charcoal";

@@ -206,6 +206,11 @@ export default function RecordEditor({
                 <p className="text-[12px] leading-[18px] text-muted">Preview is available after the first save.</p>
               )}
               {!isNew && dirty && <p className="text-[12px] leading-[18px] text-muted">Preview shows the last saved version. Save first to see your changes.</p>}
+              {status === "in_review" && (
+                <p className="text-[12px] leading-[18px] text-muted">
+                  Already sent for review, so it can&apos;t be sent again. Saving a change takes it back to Draft; send it again after that.
+                </p>
+              )}
               {locked && (
                 <p className="text-[12px] leading-[18px] text-muted">
                   This record is {status.replace("_", " ")} and can&apos;t be edited yet. Editing live content arrives with publishing.

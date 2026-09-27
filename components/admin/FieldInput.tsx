@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import RichTextEditor from "@/components/admin/RichTextEditor";
+import { thumb, type MediaOption } from "@/lib/admin/media";
 import type { Field, FieldValue, Option, SourceLink, WorkArea } from "@/lib/admin/config";
 
-export type EditorOptions = { services: Option[]; people: Option[]; publications: Option[] };
+export type EditorOptions = { services: Option[]; people: Option[]; publications: Option[]; media: MediaOption[] };
 
 const inputClass =
   "mt-1.5 h-11 w-full border bg-canvas px-3 text-[15px] placeholder:text-muted focus:border-charcoal aria-[invalid=true]:border-action";
@@ -341,23 +342,59 @@ export default function FieldInput({
       );
       break;
     }
-    case "image":
+    case "image": {
+      const chosen = options.media.find((m) => m.value === value);
       control = labelled(
-        <div id={id} tabIndex={-1} className={`mt-2 flex flex-wrap items-center gap-4 border border-dashed p-4 ${border}`}>
-          <span aria-hidden="true" className="flex h-16 w-24 items-center justify-center bg-warm text-[11px] uppercase tracking-[0.12em] text-muted">
-            No image
-          </span>
-          <span className="min-w-0 flex-1 text-[13px] leading-5 text-muted">
-            The media library is empty. Upload an approved image in the{" "}
-            <Link href="/admin/media" className="text-charcoal underline underline-offset-4">
-              media library
-            </Link>
-            , then choose it here.
-          </span>
+        <div className={`mt-2 flex flex-wrap items-center gap-4 border border-dashed p-4 ${border}`}>
+          {chosen ? (
+            // eslint-disable-next-line @next/next/no-img-element -- CMS thumbnail from the media library
+            <img src={thumb(chosen.url)} alt="" className="h-16 w-24 shrink-0 bg-warm object-cover" />
+          ) : (
+            <span aria-hidden="true" className="flex h-16 w-24 shrink-0 items-center justify-center bg-warm text-[11px] uppercase tracking-[0.12em] text-muted">
+              No image
+            </span>
+          )}
+          <div className="min-w-0 flex-1">
+            {options.media.length > 0 ? (
+              <>
+                <select
+                  id={id}
+                  value={(value as string) ?? ""}
+                  onChange={(e) => onChange(e.target.value)}
+                  aria-invalid={Boolean(error) || undefined}
+                  aria-describedby={describedBy}
+                  className={`h-11 w-full border bg-canvas px-3 text-[14px] ${border}`}
+                >
+                  <option value="">No image</option>
+                  {options.media.map((m) => (
+                    <option key={m.value} value={m.value}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1.5 text-[12px] leading-[18px] text-muted">
+                  {chosen ? (chosen.decorative ? "Decorative image (no alt text)." : `Alt text: ${chosen.alt}`) : "Upload new images in the "}
+                  {!chosen && (
+                    <Link href="/admin/media" className="text-charcoal underline underline-offset-4">
+                      media library
+                    </Link>
+                  )}
+                </p>
+              </>
+            ) : (
+              <p id={id} tabIndex={-1} className="text-[13px] leading-5 text-muted">
+                The media library is empty. Upload an approved image in the{" "}
+                <Link href="/admin/media" className="text-charcoal underline underline-offset-4">
+                  media library
+                </Link>
+                , then choose it here.
+              </p>
+            )}
+          </div>
         </div>,
-        true,
       );
       break;
+    }
   }
 
   return (

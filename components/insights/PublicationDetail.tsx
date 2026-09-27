@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import ArticleActions from "@/components/insights/ArticleActions";
 import PublicationCard from "@/components/insights/PublicationCard";
@@ -11,11 +12,36 @@ import {
   updateStatusLabel,
   type BodyBlock,
   type Publication,
+  type Span,
 } from "@/lib/content/publications";
 import { getContent } from "@/lib/content/source";
 
 function headingId(text: string): string {
   return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+/** Formatted text as React elements (never HTML). A link is re-checked before it is rendered. */
+function Runs({ runs, fallback }: { runs?: Span[]; fallback: string }) {
+  if (!runs?.length) return <>{fallback}</>;
+  return (
+    <>
+      {runs.map((r, i) => {
+        let node: React.ReactNode = r.text;
+        if (r.italic) node = <em>{node}</em>;
+        if (r.bold) node = <strong>{node}</strong>;
+        if (r.href && /^(https:\/\/|mailto:|\/(?![/\\]))/i.test(r.href)) {
+          const external = r.href.startsWith("https://");
+          node = (
+            <a href={r.href} className="text-action underline underline-offset-4" {...(external && { target: "_blank", rel: "noopener noreferrer" })}>
+              {node}
+              {external && <span className="sr-only"> (opens in a new tab)</span>}
+            </a>
+          );
+        }
+        return <span key={i}>{node}</span>;
+      })}
+    </>
+  );
 }
 
 function Block({ block }: { block: BodyBlock }) {
@@ -29,15 +55,24 @@ function Block({ block }: { block: BodyBlock }) {
     case "h3":
       return <h3 className="mt-6 text-[17px] font-bold leading-[26px]">{block.text}</h3>;
     case "ul":
+    case "ol": {
+      const List = block.kind;
       return (
-        <ul className="mt-4 list-disc space-y-1 pl-5">
-          {block.items.map((item) => (
-            <li key={item}>{item}</li>
+        <List className={`mt-4 space-y-1 pl-5 ${block.kind === "ol" ? "list-decimal" : "list-disc"}`}>
+          {block.items.map((item, i) => (
+            <li key={i}>
+              <Runs runs={block.richItems?.[i]} fallback={item} />
+            </li>
           ))}
-        </ul>
+        </List>
       );
+    }
     default:
-      return <p className="mt-4">{block.text}</p>;
+      return (
+        <p className="mt-4">
+          <Runs runs={block.rich} fallback={block.text} />
+        </p>
+      );
   }
 }
 
@@ -159,6 +194,20 @@ export default async function PublicationDetail({ publication: p }: { publicatio
 
       <div className="shell grid gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
         <article className="max-w-[720px]">
+          {p.image && (
+            <div className="relative mb-10 aspect-[16/9] w-full overflow-hidden bg-warm">
+              <Image
+                src={p.image.src}
+                alt={p.image.alt}
+                fill
+                priority
+                sizes="(min-width: 1024px) 720px, 100vw"
+                // Development images come from the backend through /api; Cloudinary images are optimised.
+                unoptimized={p.image.src.startsWith("/api/")}
+                className="object-cover"
+              />
+            </div>
+          )}
           <SourcePanel p={p} />
           {p.body.map((block, i) => (
             <Block key={i} block={block} />

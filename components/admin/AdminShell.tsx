@@ -125,8 +125,8 @@ export default function AdminShell({ user, children }: { user: AdminUser; childr
       </a>
 
       <div role="note" className="bg-charcoal px-4 py-2 text-center text-[12px] leading-[18px] text-canvas">
-        <strong>Signed in.</strong>{" "}Users, roles and the audit log are live. Editing and publishing content arrive in the next phase:
-        content changes made here are not saved yet.
+        <strong>Signed in.</strong>{" "}Drafts, review requests, media and settings are saved. Approving and publishing arrive in the next
+        phase: nothing goes live on the website yet.
       </div>
 
       <header className="flex h-16 items-center justify-between gap-4 border-b border-line bg-canvas px-4 md:px-6">

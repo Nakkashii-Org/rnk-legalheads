@@ -3,10 +3,11 @@ import {
   getContentType,
   type ContentTypeConfig,
   type ContentTypeKey,
-  type Option,
   type RecordValues,
   type WorkflowStatus,
 } from "@/lib/admin/config";
+import type { EditorOptions } from "@/components/admin/FieldInput";
+import type { MediaItem } from "@/lib/admin/media";
 import { adminGet } from "@/lib/admin/session";
 
 /**
@@ -30,7 +31,8 @@ type Row = { type: ContentTypeKey; id: string; title: string; status: WorkflowSt
 // Raw JSON from the admin API; valuesFor() below reads each field defensively.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rec = Record<string, any>;
-type BodyBlock = { kind: "h2" | "h3" | "p" | "ul"; text?: string; items?: string[] };
+type Span = { text: string; bold?: boolean; italic?: boolean; href?: string };
+type BodyBlock = { kind: "h2" | "h3" | "p" | "ul" | "ol"; text?: string; items?: string[]; rich?: Span[]; richItems?: Span[][] };
 
 export type Loaded<T> = { ok: true; data: T } | { ok: false; status: number };
 
@@ -105,18 +107,42 @@ export async function getRecord(
 }
 
 /** Choices for the editors' relationship pickers. */
-export async function editorOptions(): Promise<{ services: Option[]; people: Option[]; publications: Option[] }> {
-  const res = await adminGet<{ services: Option[]; people: Option[]; publications: Option[] }>("/options");
-  return res.ok ? res.data : { services: [], people: [], publications: [] };
+export async function editorOptions(): Promise<EditorOptions> {
+  const res = await adminGet<EditorOptions>("/options");
+  return res.ok ? { ...res.data, media: res.data.media ?? [] } : { services: [], people: [], publications: [], media: [] };
+}
+
+/** Every library image with its details and where it is used. */
+export async function listMedia(): Promise<Loaded<MediaItem[]>> {
+  const res = await adminGet<{ items: MediaItem[] }>("/media");
+  return res.ok ? { ok: true, data: res.data.items } : res;
 }
 
 // ---- Database record → editor values ----
 
 const escapeHtml = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+/** Formatting back into the editor's HTML; every piece of text and every link is escaped. */
+function runsToHtml(runs: Span[] | undefined, fallback: string): string {
+  if (!runs?.length) return escapeHtml(fallback);
+  return runs
+    .map((r) => {
+      let html = escapeHtml(r.text);
+      if (r.italic) html = `<i>${html}</i>`;
+      if (r.bold) html = `<b>${html}</b>`;
+      if (r.href) html = `<a href="${escapeHtml(r.href)}">${html}</a>`;
+      return html;
+    })
+    .join("");
+}
+
 function blocksToHtml(blocks: BodyBlock[] = []): string {
   return blocks
-    .map((b) => (b.kind === "ul" ? `<ul>${(b.items ?? []).map((i) => `<li>${escapeHtml(i)}</li>`).join("")}</ul>` : `<${b.kind}>${escapeHtml(b.text ?? "")}</${b.kind}>`))
+    .map((b) =>
+      b.kind === "ul" || b.kind === "ol"
+        ? `<${b.kind}>${(b.items ?? []).map((item, i) => `<li>${runsToHtml(b.richItems?.[i], item)}</li>`).join("")}</${b.kind}>`
+        : `<${b.kind}>${runsToHtml(b.rich, b.text ?? "")}</${b.kind}>`,
+    )
     .join("");
 }
 
@@ -136,7 +162,7 @@ function valuesFor(config: ContentTypeConfig, d: Rec): RecordValues {
         author: d.author?.personSlug ? [d.author.personSlug] : [],
         services: d.serviceIds ?? [],
         sources: d.sources?.length ? d.sources.map((x: Rec) => ({ label: s(x.label), url: s(x.url) })) : [{ label: "", url: "" }],
-        image: "",
+        image: s(d.image?.mediaId),
       };
       if (config.key === "judgments")
         return {
@@ -189,6 +215,7 @@ function valuesFor(config: ContentTypeConfig, d: Rec): RecordValues {
         enrolment: s(d.enrolment),
         languages: s(d.languages),
         office: s(d.office),
+        portrait: s(d.portrait?.mediaId),
         portraitConsent: Boolean(d.portraitConsent),
         services: d.serviceIds ?? [],
       };

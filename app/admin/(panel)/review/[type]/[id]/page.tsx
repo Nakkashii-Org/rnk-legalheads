@@ -6,6 +6,7 @@ import ReviewPanel from "@/components/admin/ReviewPanel";
 import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, type Field, type FieldValue, type SourceLink, type WorkArea } from "@/lib/admin/config";
+import { thumb } from "@/lib/admin/media";
 import { previewHref } from "@/lib/admin/preview";
 import { editorOptions, getRecord, getRevisions } from "@/lib/admin/records";
 
@@ -20,6 +21,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 const plain = (html: string) =>
   html
+    .replace(/<li[^>]*>/g, "• ")
     .replace(/<\/(p|h2|h3|li)>/g, "\n")
     .replace(/<[^>]*>/g, "")
     .replace(/&amp;/g, "&")
@@ -78,7 +80,21 @@ export default async function ReviewRecordPage({ params }: { params: Params }) {
           ))}
         </ul>
       );
-    if (field.kind === "image") return "No image";
+    if (field.kind === "image") {
+      const media = options.media.find((m) => m.value === value);
+      if (!value) return "No image";
+      if (!media) return <span className="text-action">The chosen image is no longer in the media library</span>;
+      return (
+        <span className="flex flex-wrap items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element -- CMS thumbnail */}
+          <img src={thumb(media.url)} alt="" className="h-16 w-24 bg-warm object-cover" />
+          <span>
+            {media.label}
+            <span className="block text-[13px] text-muted">{media.decorative ? "Decorative (no alt text)" : `Alt text: ${media.alt}`}</span>
+          </span>
+        </span>
+      );
+    }
     if (Array.isArray(value))
       return (value as string[]).length ? (value as string[]).map((v) => labelFor(field, v)).join(", ") : "—";
     return (value as string) ? labelFor(field, value as string) : "—";

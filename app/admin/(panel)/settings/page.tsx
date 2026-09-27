@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import AdminPageHeader from "@/components/admin/AdminPageHeader";
 import EmptyState from "@/components/admin/EmptyState";
-import SettingsForm from "@/components/admin/SettingsForm";
-import { getAdminUser, isAdmin } from "@/lib/admin/session";
+import SettingsForm, { type SettingsValues } from "@/components/admin/SettingsForm";
+import { adminGet, getAdminUser, isAdmin } from "@/lib/admin/session";
 import { footerColumns, legalLinks, primaryNav } from "@/lib/content/site";
-import { getContent } from "@/lib/content/source";
 
 export const metadata: Metadata = { title: "Site settings" };
 
@@ -16,7 +15,8 @@ export default async function SettingsPage() {
         <EmptyState title="Administrators only" />
       </div>
     );
-  const { site, contactDetails } = await getContent();
+  // Read straight from the database (not the website's 5-minute cache), so the form shows what is saved.
+  const saved = await adminGet<{ settings: SettingsValues & { updatedAt?: string } }>("/settings");
   const navigation = [
     { area: "Main menu", links: primaryNav },
     ...footerColumns.map((c) => ({ area: `Footer: ${c.heading}`, links: c.links })),
@@ -30,20 +30,11 @@ export default async function SettingsPage() {
         title="Site settings"
         description="Firm facts used across the website. Administrators only. API keys and passwords are never stored here; they stay in the server environment."
       />
-      <SettingsForm
-        initial={{
-          brandName: site.name,
-          legalEntity: site.legalEntity ?? "",
-          established: String(site.established),
-          domain: "",
-          statement: site.statement,
-          disclaimer: site.disclaimer,
-          address: contactDetails.address ?? "",
-          phone: contactDetails.phone ?? "",
-          email: contactDetails.email ?? "",
-          mapQuery: contactDetails.mapQuery ?? "",
-        }}
-      />
+      {saved.ok ? (
+        <SettingsForm initial={saved.data.settings} />
+      ) : (
+        <EmptyState title="Settings could not be loaded">Please refresh the page. If it keeps happening, the backend may be asleep or down.</EmptyState>
+      )}
       <section aria-labelledby="nav-title" className="max-w-[760px] space-y-3">
         <h2 id="nav-title" className="font-serif text-[20px] leading-[28px]">
           Navigation

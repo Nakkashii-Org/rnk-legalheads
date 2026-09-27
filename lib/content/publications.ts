@@ -3,12 +3,18 @@ import { matchesAll, queryWords } from "@/lib/search";
 
 export type PublicationType = "article" | "judgment" | "update";
 
-/** Structured body blocks (plain text only, so nothing needs HTML sanitising). Sanity Portable Text maps onto these in Step 8. */
+/** A run of text with its formatting. Links are checked by the CMS (https://, mailto: or a site path). */
+export type Span = { text: string; bold?: boolean; italic?: boolean; href?: string };
+
+/**
+ * Structured body blocks. `text`/`items` are always plain text (search, reading time); `rich`/
+ * `richItems` carry bold, italic and links as data, never HTML, so nothing needs sanitising.
+ */
 export type BodyBlock =
   | { kind: "h2"; text: string }
   | { kind: "h3"; text: string }
-  | { kind: "p"; text: string }
-  | { kind: "ul"; items: string[] };
+  | { kind: "p"; text: string; rich?: Span[] }
+  | { kind: "ul" | "ol"; items: string[]; richItems?: Span[][] };
 
 export type Source = { label: string; url?: string };
 
@@ -23,6 +29,8 @@ type PublicationBase = {
   updatedAt?: string;
   serviceIds: string[];
   body: BodyBlock[];
+  /** Optional image from the CMS media library (empty alt = decorative). */
+  image?: { src: string; alt: string };
   sources: Source[];
   approved: boolean;
   /** Layout-preview record: draft review mode only, never production (guide p.19, p.126). */
@@ -161,7 +169,7 @@ export function byDateDesc(a: Publication, b: Publication): number {
 }
 
 export function bodyText(p: Publication): string {
-  return p.body.map((block) => (block.kind === "ul" ? block.items.join(" ") : block.text)).join(" ");
+  return p.body.map((block) => ("items" in block ? block.items.join(" ") : block.text)).join(" ");
 }
 
 export function publicationSearchText(p: Publication, publicServices: Service[]): string {

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Media-library images (CMS phase C4) are delivered by Cloudinary.
+  images: { remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com", pathname: "/*/image/upload/**" }] },
   // One-hop permanent redirects from the old site (guide pp.11–13, p.120).
   // /ip-litigation and /ip-prosecution are added once their replacement service pages are approved.
   async redirects() {

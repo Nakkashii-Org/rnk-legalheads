@@ -18,7 +18,13 @@ export function publicationRoute(type: PublicationType) {
         description: p.summary,
         alternates: { canonical: `${publicationTypeMeta[type].basePath}/${p.slug}` },
         robots: p.preview ? { index: false, follow: false } : undefined,
-        openGraph: { type: "article", title: p.title, description: p.summary, publishedTime: p.publishedAt },
+        openGraph: {
+          type: "article",
+          title: p.title,
+          description: p.summary,
+          publishedTime: p.publishedAt,
+          images: p.image ? [{ url: p.image.src, alt: p.image.alt }] : undefined,
+        },
       };
     },
     async load(params: Params) {
