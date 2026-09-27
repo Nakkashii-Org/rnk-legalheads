@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Test builds can use their own folder (NEXT_DIST_DIR=.next-e2e) so they never disturb a running `npm run dev`.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Media-library images (CMS phase C4) are delivered by Cloudinary.
   images: { remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com", pathname: "/*/image/upload/**" }] },
   // One-hop permanent redirects from the old site (guide pp.11–13, p.120).

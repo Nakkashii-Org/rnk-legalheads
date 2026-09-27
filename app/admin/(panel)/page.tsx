@@ -173,7 +173,7 @@ export default async function DashboardPage() {
               </ul>
               <p className="mt-2 text-[12px] text-muted">
                 {result.data.inbox
-                  ? "New enquiries and applications received through the website. The inbox screens arrive in phase E."
+                  ? "New enquiries and applications received through the website. Open one to read it, reply and set its status."
                   : "Enquiries and applications are visible to Publishers and Administrators."}
               </p>
             </section>

@@ -32,3 +32,6 @@ export async function getAdminUser(): Promise<AdminUser | undefined> {
 }
 
 export const isAdmin = (user: AdminUser | undefined) => Boolean(user?.roles.includes("admin"));
+
+/** Enquiries and applications hold personal data: Publishers and Administrators only (phase E). */
+export const canUseInbox = (user: AdminUser | undefined) => Boolean(user?.roles.some((r) => r === "admin" || r === "publisher"));
