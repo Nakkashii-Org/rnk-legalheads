@@ -12,16 +12,36 @@ import { isPublic, showDrafts } from "@/lib/visibility";
  * Read-only view of the site content with the visibility rules (guide p.18, p.150):
  * - public site: only approved records; held services never appear;
  * - draft review mode: everything, and the labelled layout previews while nothing is approved.
+ * - staff preview (Next.js draft mode, signed-in CMS users only): everything, like draft review mode.
  * The rules are applied here even when the backend already filtered, as a second safeguard.
  */
 export class Content {
-  constructor(private readonly data: ContentData) {}
+  /** Whether drafts are shown: draft review mode, or a signed-in staff preview. */
+  readonly drafts: boolean;
+  /** A signed-in staff member is previewing drafts (the page shows a staff-only banner). */
+  readonly staffPreview: boolean;
 
-  /** Approved records; in draft review mode, all records while none is approved (previews included). */
+  constructor(
+    private readonly data: ContentData,
+    options: { staffPreview?: boolean } = {},
+  ) {
+    this.staffPreview = Boolean(options.staffPreview);
+    this.drafts = showDrafts || this.staffPreview;
+  }
+
+  /** Approved and not held; everything when drafts are shown. */
+  isPublic(item: { approved: boolean; hold?: boolean }): boolean {
+    return this.drafts || isPublic(item);
+  }
+
+  /**
+   * Approved records. When drafts are shown: every real record (drafts included), and the layout
+   * previews only while there is no real record yet.
+   */
   private visibleWithPreviews<T extends { approved: boolean; preview?: boolean }>(records: T[]): T[] {
-    const approved = records.filter((r) => r.approved && !r.preview);
-    if (approved.length > 0 || !showDrafts) return approved;
-    return records;
+    if (!this.drafts) return records.filter((r) => r.approved && !r.preview);
+    const real = records.filter((r) => !r.preview);
+    return real.length > 0 ? real : records;
   }
 
   // ---- Site ----
@@ -34,7 +54,7 @@ export class Content {
 
   // ---- Services ----
   publicServices(): Service[] {
-    return this.data.services.filter(isPublic);
+    return this.data.services.filter((s) => this.isPublic(s));
   }
   publicService(slug: string): Service | undefined {
     return this.publicServices().find((s) => s.slug === slug);
@@ -56,7 +76,7 @@ export class Content {
     return this.data.industries;
   }
   publicIndustries(): Industry[] {
-    return this.data.industries.filter(isPublic);
+    return this.data.industries.filter((i) => this.isPublic(i));
   }
   publicIndustry(slug: string): Industry | undefined {
     return this.publicIndustries().find((i) => i.slug === slug);

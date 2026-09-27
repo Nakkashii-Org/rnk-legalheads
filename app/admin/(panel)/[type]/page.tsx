@@ -7,6 +7,7 @@ import EmptyState from "@/components/admin/EmptyState";
 import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, WORKFLOW_STATUSES, type WorkflowStatus } from "@/lib/admin/config";
+import { previewHref } from "@/lib/admin/preview";
 import { listRecords } from "@/lib/admin/records";
 
 type Params = Promise<{ type: string }>;
@@ -118,10 +119,10 @@ export default async function ContentListPage({ params, searchParams }: { params
               </div>
               <div className="text-[13px] text-muted">{r.author ? `${r.author} · ${r.detail}` : r.detail}</div>
               <div className="md:text-right">
-                <Link href={r.publicHref} target="_blank" className="inline-flex min-h-11 items-center gap-1.5 text-[13px] underline underline-offset-4 md:min-h-0">
-                  View <Arrow />
-                  <span className="sr-only"> {r.title} on the website (opens in a new tab)</span>
-                </Link>
+                <a href={previewHref(r.publicHref)} target="_blank" rel="noopener" className="inline-flex min-h-11 items-center gap-1.5 text-[13px] underline underline-offset-4 md:min-h-0">
+                  Preview <Arrow />
+                  <span className="sr-only"> {r.title} (staff-only preview, opens in a new tab)</span>
+                </a>
               </div>
             </li>
           ))}

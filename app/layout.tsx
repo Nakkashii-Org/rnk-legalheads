@@ -3,6 +3,7 @@ import NewsletterBand from "@/components/layout/NewsletterBand";
 import SiteChrome from "@/components/layout/SiteChrome";
 import SiteFooter from "@/components/layout/SiteFooter";
 import SiteHeader from "@/components/layout/SiteHeader";
+import StaffPreviewBanner from "@/components/layout/StaffPreviewBanner";
 import { getContent } from "@/lib/content/source";
 import { groupHref } from "@/lib/content/services";
 import "./globals.css";
@@ -33,6 +34,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         >
           Skip to main content
         </a>
+        {content.staffPreview && <StaffPreviewBanner />}
         <SiteChrome
           header={<SiteHeader groups={headerGroups} />}
           footer={

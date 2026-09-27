@@ -6,7 +6,8 @@ import ReviewPanel from "@/components/admin/ReviewPanel";
 import StatusBadge from "@/components/admin/StatusBadge";
 import Arrow from "@/components/ui/Arrow";
 import { getContentType, type Field, type FieldValue, type SourceLink, type WorkArea } from "@/lib/admin/config";
-import { editorOptions, getRecord } from "@/lib/admin/records";
+import { previewHref } from "@/lib/admin/preview";
+import { editorOptions, getRecord, getRevisions } from "@/lib/admin/records";
 
 type Params = Promise<{ type: string; id: string }>;
 
@@ -33,7 +34,8 @@ export default async function ReviewRecordPage({ params }: { params: Params }) {
   const found = config && (await getRecord(config.key, id));
   if (!config || !found) notFound();
 
-  const options = await editorOptions();
+  const [options, revisions] = await Promise.all([editorOptions(), getRevisions(config.key, found.record.id)]);
+  const latest = revisions[0];
   const labelFor = (field: Field, value: string) =>
     field.kind === "services" || field.kind === "people" || field.kind === "publications"
       ? (options[field.kind].find((o) => o.value === value)?.label ?? value)
@@ -89,15 +91,18 @@ export default async function ReviewRecordPage({ params }: { params: Params }) {
         title={`Review: ${found.record.title}`}
         description={
           <>
-            {config.singular} · Revision: draft from the site&apos;s content files (not yet saved in the CMS).
+            {config.singular} ·{" "}
+            {latest
+              ? `Revision ${latest.number}, saved by ${latest.savedBy}.`
+              : "Revision: imported from the site's content files (not yet saved in the CMS)."}
           </>
         }
         actions={
           <>
-            <Link href={found.record.publicHref} target="_blank" className="btn btn-secondary">
+            <a href={previewHref(found.record.publicHref)} target="_blank" rel="noopener" className="btn btn-secondary">
               Full preview <Arrow />
-              <span className="sr-only"> (opens in a new tab)</span>
-            </Link>
+              <span className="sr-only"> (staff-only preview, opens in a new tab)</span>
+            </a>
             <Link href={`/admin/${config.key}/${found.record.id}`} className="btn btn-secondary">
               Open in editor
             </Link>

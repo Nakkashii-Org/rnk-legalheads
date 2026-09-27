@@ -3,7 +3,6 @@ import Link from "next/link";
 import Arrow from "@/components/ui/Arrow";
 import PageHero from "@/components/ui/PageHero";
 import { getContent } from "@/lib/content/source";
-import { isPublic } from "@/lib/visibility";
 
 const LEAD =
   "Sector context helps identify the legal questions that need to be considered together. Each industry page connects to the relevant services.";
@@ -42,7 +41,7 @@ export default async function IndustriesPage() {
             );
 
             // Finished sector pages get a link; unfinished cards must not link to an empty page (p.115).
-            if (isPublic(industry)) {
+            if (content.isPublic(industry)) {
               return (
                 <li key={industry.slug}>
                   <Link href={`/industries/${industry.slug}`} className="group block h-full border-t border-line pb-10 pt-5">

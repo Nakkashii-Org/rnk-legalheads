@@ -89,12 +89,19 @@ export async function loadDashboard(): Promise<Loaded<Dashboard>> {
 }
 
 /** One record, mapped into the editor's field values. */
-export async function getRecord(type: ContentTypeKey, id: string): Promise<{ record: AdminRecord; values: RecordValues } | undefined> {
+export async function getRecord(
+  type: ContentTypeKey,
+  id: string,
+): Promise<{ record: AdminRecord; values: RecordValues; createdBy?: string } | undefined> {
   const config = getContentType(type);
   if (!config) return undefined;
   const res = await adminGet<{ summary: Row; record: Rec }>(`/content/${type}/${encodeURIComponent(id)}`);
   if (!res.ok) return undefined;
-  return { record: toRecord(res.data.summary), values: { ...emptyValues(config), ...valuesFor(config, res.data.record) } };
+  return {
+    record: toRecord(res.data.summary),
+    values: { ...emptyValues(config), ...valuesFor(config, res.data.record) },
+    createdBy: typeof res.data.record.createdBy === "string" ? res.data.record.createdBy : undefined,
+  };
 }
 
 /** Choices for the editors' relationship pickers. */
@@ -225,4 +232,12 @@ function valuesFor(config: ContentTypeConfig, d: Rec): RecordValues {
     default:
       return {};
   }
+}
+
+export type RevisionRow = { number: number; action: string; status: WorkflowStatus; savedBy: string; savedAt: string };
+
+/** Saved versions of a record, newest first (empty for imported records never saved in the CMS). */
+export async function getRevisions(type: ContentTypeKey, id: string): Promise<RevisionRow[]> {
+  const res = await adminGet<{ revisions: RevisionRow[] }>(`/content/${type}/${encodeURIComponent(id)}/revisions`);
+  return res.ok ? res.data.revisions : [];
 }

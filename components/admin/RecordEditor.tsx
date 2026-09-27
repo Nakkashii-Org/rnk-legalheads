@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import ActionNotice from "@/components/admin/ActionNotice";
 import FieldInput, { fieldId, type EditorOptions } from "@/components/admin/FieldInput";
@@ -17,11 +18,16 @@ import {
   type RecordValues,
   type WorkflowStatus,
 } from "@/lib/admin/config";
-import { useAdminAction } from "@/lib/admin/request";
+import { previewHref } from "@/lib/admin/preview";
+import type { RevisionRow } from "@/lib/admin/records";
+import { useAdminAction, type AdminResult } from "@/lib/admin/request";
+
+/** Approved and published records can't be edited until publishing arrives (phase D). */
+const LOCKED: WorkflowStatus[] = ["approved", "published", "unpublished", "archived"];
 
 /**
- * A03 / A05 / A06 editor. Save draft needs only a title; Send for review runs every required
- * check. All actions go to the admin API and report honestly when it is not available.
+ * A03 / A05 / A06 editor. Save draft needs only a title and URL slug; Send for review runs every
+ * required check. The server checks everything again and its field errors are shown here.
  */
 export default function RecordEditor({
   typeKey,
@@ -31,6 +37,8 @@ export default function RecordEditor({
   layoutPreview,
   initialValues,
   options,
+  revisions = [],
+  canDelete = false,
 }: {
   typeKey: ContentTypeKey;
   recordId?: string;
@@ -39,6 +47,8 @@ export default function RecordEditor({
   layoutPreview?: boolean;
   initialValues: RecordValues;
   options: EditorOptions;
+  revisions?: RevisionRow[];
+  canDelete?: boolean;
 }) {
   const config = getContentType(typeKey)!;
   const isNew = !recordId;
@@ -49,6 +59,8 @@ export default function RecordEditor({
   const [slugTouched, setSlugTouched] = useState(!isNew);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const action = useAdminAction();
+  const router = useRouter();
+  const locked = LOCKED.includes(status);
 
   const slugField = allFields(config).find((f) => f.kind === "slug");
   const title = (values[config.titleField] as string) || `Untitled ${config.singular.toLowerCase()}`;
@@ -79,14 +91,28 @@ export default function RecordEditor({
     return !has;
   }
 
-  const path = isNew ? `/${typeKey}` : `/${typeKey}/${recordId}`;
-  const body = () => JSON.stringify(values);
+  const path = isNew ? `/content/${typeKey}` : `/content/${typeKey}/${recordId}`;
+  const body = () => JSON.stringify({ values });
+
+  /** Shows the server's field errors (422); returns the saved record's id, or undefined. */
+  function saved(result: AdminResult): string | undefined {
+    if (result.status === 422 && result.data?.errors) report(result.data.errors as Record<string, string>);
+    if (!result.ok) return undefined;
+    setDirty(false);
+    return String(result.data?.id ?? recordId);
+  }
+
+  /** After a save: open the record's own page (new record or changed slug), or refresh status and history. */
+  function show(id: string) {
+    if (id !== recordId) router.replace(`/admin/${typeKey}/${id}`);
+    else router.refresh();
+  }
 
   async function saveDraft() {
-    if (!report(values[config.titleField] ? {} : { [config.titleField]: `${allFields(config).find((f) => f.name === config.titleField)!.label} is required to save a draft.` }))
-      return;
-    const ok = await action.run("Saving draft", path, { method: isNew ? "POST" : "PATCH", body: body() }, "Draft saved as a new revision.");
-    if (ok) setDirty(false);
+    const titleLabel = allFields(config).find((f) => f.name === config.titleField)!.label;
+    if (!report(values[config.titleField] ? {} : { [config.titleField]: `${titleLabel} is required to save a draft.` })) return;
+    const id = saved(await action.call("Saving draft", path, { method: isNew ? "POST" : "PATCH", body: body() }, "Draft saved as a new revision."));
+    if (id) show(id);
   }
 
   async function sendForReview() {
@@ -94,7 +120,26 @@ export default function RecordEditor({
       action.setState({ kind: "idle" });
       return;
     }
-    await action.run("Sending for review", `${path}/submit`, { method: "POST", body: body() }, "Sent to the review queue. Legal reviewers have been notified.");
+    let id = recordId;
+    // A new record is saved as a draft first, then sent.
+    if (isNew) {
+      id = saved(await action.call("Saving draft", path, { method: "POST", body: body() }, "Draft saved."));
+      if (!id) return;
+    }
+    const sent = saved(
+      await action.call("Sending for review", `/content/${typeKey}/${id}/submit`, { method: "POST", body: body() }, "Sent to the review queue. Editing it again takes it back to draft."),
+    );
+    if (sent) show(sent);
+    else if (id !== recordId) show(id!);
+  }
+
+  async function deleteDraft() {
+    const ok = await action.run("Deleting draft", path, { method: "DELETE" }, "Draft deleted.");
+    setConfirmDelete(false);
+    if (ok) {
+      setDirty(false);
+      router.replace(`/admin/${typeKey}`);
+    }
   }
 
   const errorList = allFields(config)
@@ -127,10 +172,10 @@ export default function RecordEditor({
 
         {/* Primary actions repeated below the form for long records on small screens. */}
         <div className="flex flex-wrap gap-3 lg:hidden">
-          <button type="submit" disabled={action.busy} className="btn btn-primary">
+          <button type="submit" disabled={action.busy || locked} className="btn btn-primary">
             Save draft
           </button>
-          <button type="button" onClick={sendForReview} disabled={action.busy} className="btn btn-secondary">
+          <button type="button" onClick={sendForReview} disabled={action.busy || locked || status === "in_review"} className="btn btn-secondary">
             Send for review
           </button>
         </div>
@@ -149,18 +194,24 @@ export default function RecordEditor({
             </p>
 
             <div className="mt-4 grid gap-2">
-              <button type="button" onClick={saveDraft} disabled={action.busy} className="btn btn-primary justify-center disabled:cursor-wait disabled:opacity-70">
+              <button type="button" onClick={saveDraft} disabled={action.busy || locked} className="btn btn-primary justify-center disabled:cursor-wait disabled:opacity-70">
                 Save draft
               </button>
               {publicHref && !isNew ? (
-                <Link href={publicHref} target="_blank" className="btn btn-secondary justify-center">
+                <a href={previewHref(publicHref)} target="_blank" rel="noopener" className="btn btn-secondary justify-center">
                   Preview <Arrow />
-                  <span className="sr-only"> (opens in a new tab)</span>
-                </Link>
+                  <span className="sr-only"> (staff-only preview of the saved draft, opens in a new tab)</span>
+                </a>
               ) : (
                 <p className="text-[12px] leading-[18px] text-muted">Preview is available after the first save.</p>
               )}
-              <button type="button" onClick={sendForReview} disabled={action.busy} className="btn btn-secondary justify-center">
+              {!isNew && dirty && <p className="text-[12px] leading-[18px] text-muted">Preview shows the last saved version. Save first to see your changes.</p>}
+              {locked && (
+                <p className="text-[12px] leading-[18px] text-muted">
+                  This record is {status.replace("_", " ")} and can&apos;t be edited yet. Editing live content arrives with publishing.
+                </p>
+              )}
+              <button type="button" onClick={sendForReview} disabled={action.busy || locked || status === "in_review"} className="btn btn-secondary justify-center">
                 Send for review
               </button>
             </div>
@@ -213,10 +264,26 @@ export default function RecordEditor({
 
           <section className="border border-line px-5 py-5">
             <h2 className="text-[12px] font-bold uppercase tracking-[0.12em] text-muted">Revision history</h2>
-            <p className="mt-2 text-[13px] leading-5 text-muted">No saved revisions yet. Each save will be listed here with its author and time.</p>
+            {revisions.length === 0 ? (
+              <p className="mt-2 text-[13px] leading-5 text-muted">
+                {isNew ? "No saved revisions yet." : "No revisions saved in the CMS yet. This record was imported; each save will be listed here."}
+              </p>
+            ) : (
+              <ol className="mt-3 space-y-2 text-[13px] leading-5">
+                {revisions.map((r) => (
+                  <li key={r.number}>
+                    <strong>Revision {r.number}</strong> <span className="text-muted">· {r.action}</span>
+                    <span className="block text-[12px] text-muted">
+                      {r.savedBy} ·{" "}
+                      <time dateTime={r.savedAt}>{new Date(r.savedAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</time>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            )}
           </section>
 
-          {!isNew && status === "draft" && (
+          {!isNew && canDelete && (status === "draft" || status === "changes_requested") && (
             <section className="border border-line px-5 py-5">
               {confirmDelete ? (
                 <div role="group" aria-label="Confirm delete">
@@ -226,10 +293,7 @@ export default function RecordEditor({
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
-                      onClick={async () => {
-                        await action.run("Deleting draft", path, { method: "DELETE" }, "Draft deleted.");
-                        setConfirmDelete(false);
-                      }}
+                      onClick={deleteDraft}
                       className="inline-flex min-h-11 items-center border border-action px-3 text-[13px] font-bold text-action hover:bg-warm md:min-h-9"
                     >
                       Delete draft

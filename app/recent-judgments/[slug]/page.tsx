@@ -4,7 +4,8 @@ import { publicationRoute } from "@/lib/publication-route";
 
 const route = publicationRoute("judgment");
 
-export const dynamicParams = false;
+// Unknown slugs render on request (then 404), so a signed-in staff preview can open unpublished drafts.
+export const dynamicParams = true;
 export const generateStaticParams = route.generateStaticParams;
 export const generateMetadata = route.generateMetadata;
 

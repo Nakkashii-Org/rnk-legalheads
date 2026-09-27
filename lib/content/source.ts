@@ -1,4 +1,5 @@
 import { unstable_cache } from "next/cache";
+import { draftMode, headers } from "next/headers";
 import { cache } from "react";
 import { buildLocalContent } from "@/lib/content/local";
 import { Content } from "@/lib/content/store";
@@ -43,11 +44,33 @@ function warnFallback(error: unknown) {
 }
 
 /**
+ * Staff preview (Next.js draft mode, switched on by /admin/preview): the backend returns drafts
+ * only for a signed-in CMS session cookie, so a copied draft-mode cookie alone shows nothing
+ * extra. Never cached.
+ */
+async function staffPreviewBundle(): Promise<ContentData | undefined> {
+  try {
+    // Throws outside a request (generateStaticParams at build time): no preview there.
+    if (!(await draftMode()).isEnabled) return undefined;
+    const response = await fetch(`${BACKEND_URL}/api/admin/preview-bundle`, {
+      headers: { cookie: (await headers()).get("cookie") ?? "" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
+    });
+    return response.ok ? ((await response.json()) as ContentData) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * The site's content for the current request (one fetch per request at most). Without a
  * backend, or if it has never answered, the content built into the website's files is used.
  */
 export const getContent = cache(async (): Promise<Content> => {
   if (!BACKEND_URL) return new Content(buildLocalContent());
+  const preview = await staffPreviewBundle();
+  if (preview) return new Content(preview, { staffPreview: true });
   try {
     return new Content(await cachedBundle());
   } catch (error) {

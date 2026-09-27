@@ -10,7 +10,8 @@ import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
-export const dynamicParams = false;
+// Unknown slugs render on request (then 404), so a signed-in staff preview can open unpublished drafts.
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   return (await getContent()).publicJobs().map((job) => ({ slug: job.slug }));
