@@ -355,7 +355,7 @@ export default function ApplicationForm({
           <label htmlFor="consent" className="text-[14px] leading-[22px]">
             I agree that RNK Legalheads may use my details and resume for recruitment only, as described in the{" "}
             <Link href="/privacy-policy" className="underline underline-offset-4">
-              privacy notice
+              Privacy Policy
             </Link>
             .
           </label>

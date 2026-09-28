@@ -13,7 +13,7 @@ export default function ApplicationNotes() {
       <p className="mt-4">
         Your details and resume are used for recruitment only, as described in our{" "}
         <Link href="/privacy-policy" className="text-charcoal underline underline-offset-4 hover:text-action">
-          privacy notice
+          Privacy Policy
         </Link>
         .
       </p>

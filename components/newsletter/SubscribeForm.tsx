@@ -137,7 +137,7 @@ export default function SubscribeForm({ initialTopics = [] }: { initialTopics?: 
         <p className="mt-3 text-[13px] leading-[20px] text-muted">
           We use your email address and selected topics to manage your subscription. Read our{" "}
           <Link href="/privacy-policy" className="underline underline-offset-4">
-            privacy notice
+            Privacy Policy
           </Link>
           .
         </p>

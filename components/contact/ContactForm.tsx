@@ -271,10 +271,10 @@ export default function ContactForm({
             className="mt-0.5 h-5 w-5 shrink-0 accent-charcoal"
           />
           <label htmlFor="acknowledged" className="text-[14px] leading-[22px]">
-            I understand that submitting this form does not create a lawyer-client relationship. My details will be
+            I understand that submitting this form does not create an advocate-client relationship. My details will be
             used to assess and respond to this enquiry as described in the{" "}
             <Link href="/privacy-policy" className="underline underline-offset-4">
-              privacy notice
+              Privacy Policy
             </Link>
             .
           </label>

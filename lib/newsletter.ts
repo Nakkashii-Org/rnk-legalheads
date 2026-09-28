@@ -5,10 +5,10 @@ import { serviceGroups } from "@/lib/content/services";
 export const NEWSLETTER_TOPICS = serviceGroups.map((group) => ({ id: group.key, label: group.name }));
 
 /**
- * Privacy-notice version recorded with each consent (guide p.130, p.158).
- * Update when the approved privacy notice changes.
+ * Privacy Policy version recorded with each consent (guide p.130, p.158): its "Last updated" date.
+ * Update whenever the approved Privacy Policy changes (lib/content/legal.ts).
  */
-export const SUBSCRIPTION_NOTICE_VERSION = "draft-2026-09";
+export const SUBSCRIPTION_NOTICE_VERSION = "privacy-policy-2026-09-24";
 
 export type SubscribeFields = { email: string; topics: string[]; consent: boolean };
 export type SubscribeErrors = Partial<Record<"email" | "topics" | "consent", string>>;

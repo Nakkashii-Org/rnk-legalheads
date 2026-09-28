@@ -11,6 +11,8 @@ export type ContactDetails = { address?: string; phone?: string; email?: string;
 export type SiteInfo = {
   name: string;
   legalEntity?: string;
+  /** Name or designation of the grievance / privacy contact (Privacy Policy section 13). */
+  grievanceContact?: string;
   established: number;
   statement: string;
   disclaimer: string;

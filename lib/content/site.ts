@@ -3,7 +3,7 @@ export const site = {
   established: 2024,
   statement: "A full-service law firm. Established in 2024.",
   disclaimer:
-    "This website provides general information. It is not legal advice and does not create a lawyer-client relationship.",
+    "This website provides general information. It is not legal advice and does not create a advocate-client relationship.",
 };
 
 /**
@@ -61,8 +61,9 @@ export const footerColumns: { heading: string; links: NavLink[] }[] = [
 
 export const legalLinks: NavLink[] = [
   { label: "Disclaimer", href: "/disclaimer" },
-  { label: "Privacy", href: "/privacy-policy" },
-  { label: "Website terms", href: "/terms-and-conditions" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Terms of Use", href: "/terms-and-conditions" },
+  { label: "Cookie Policy", href: "/cookie-policy" },
 ];
 
 export type HeroSlide = {

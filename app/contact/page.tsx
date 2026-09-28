@@ -107,7 +107,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Sear
               engagement is confirmed separately after the firm agrees that it can act.
             </p>
             <p className="mt-3 text-[14px] leading-[22px] text-muted">
-              Sending this form does not create a lawyer-client relationship or confirm that the firm is acting for
+              Sending this form does not create a advocate-client relationship or confirm that the firm is acting for
               you. Do not use it for urgent procedural deadlines.
             </p>
           </section>

@@ -16,6 +16,7 @@ export type SettingsValues = {
   phone: string;
   email: string;
   mapQuery: string;
+  grievanceContact: string;
 };
 
 type Key = keyof SettingsValues;
@@ -36,6 +37,11 @@ const groups: { title: string; fields: { key: Key; label: string; rows?: number;
       { key: "phone", label: "Telephone", hint: "Leave blank until a verified number is supplied." },
       { key: "email", label: "Enquiry email", required: true },
       { key: "mapQuery", label: "Map location", hint: "Search text used for the Google Map on the contact page." },
+      {
+        key: "grievanceContact",
+        label: "Grievance / privacy contact",
+        hint: "Name or designation, e.g. \"Data Protection Officer\". Shown in the Privacy Policy with the enquiry email and office address.",
+      },
     ],
   },
   {

@@ -12,7 +12,7 @@ type ContactCtaProps = {
 export default function ContactCta({
   href = "/contact",
   heading = "Contact the team",
-  text = "Share your contact details and a brief, non-confidential description of the subject. Sending an enquiry does not create a lawyer-client relationship.",
+  text = "Share your contact details and a brief, non-confidential description of the subject. Sending an enquiry does not create a advocate-client relationship.",
   label = "Contact the team",
 }: ContactCtaProps) {
   return (
