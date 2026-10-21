@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import ActionNotice from "@/components/admin/ActionNotice";
+import PhoneNumbers from "@/components/admin/PhoneNumbers";
 import ErrorSummary from "@/components/forms/ErrorSummary";
 import { useAdminAction } from "@/lib/admin/request";
 
@@ -34,7 +35,7 @@ const groups: { title: string; fields: { key: Key; label: string; rows?: number;
     title: "Contact details",
     fields: [
       { key: "address", label: "Office address", rows: 4, required: true, hint: "Shown on the contact page and in the footer. One line per row." },
-      { key: "phone", label: "Telephone", hint: "Leave blank until a verified number is supplied." },
+      { key: "phone", label: "Telephone numbers" },
       { key: "email", label: "Enquiry email", required: true },
       { key: "mapQuery", label: "Map location", hint: "Search text used for the Google Map on the contact page." },
       {
@@ -57,6 +58,8 @@ const groups: { title: string; fields: { key: Key; label: string; rows?: number;
 export default function SettingsForm({ initial }: { initial: SettingsValues }) {
   const [values, setValues] = useState(initial);
   const [errors, setErrors] = useState<Partial<Record<Key, string>>>({});
+  // A telephone number typed into the box but not yet added with "Add number".
+  const [pendingPhone, setPendingPhone] = useState("");
   const summaryRef = useRef<HTMLDivElement>(null);
   const action = useAdminAction();
 
@@ -67,6 +70,7 @@ export default function SettingsForm({ initial }: { initial: SettingsValues }) {
       for (const f of group.fields) if (f.required && !values[f.key].trim()) found[f.key] = `${f.label} is required.`;
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) found.email = "Enter a valid email address.";
     if (values.established && !/^(19|20)\d{2}$/.test(values.established.trim())) found.established = "Enter a four-digit year.";
+    if (pendingPhone.trim()) found.phone = "Click Add number to add the telephone number you typed, or clear the box.";
     setErrors(found);
     if (Object.keys(found).length) {
       requestAnimationFrame(() => summaryRef.current?.focus());
@@ -107,6 +111,21 @@ export default function SettingsForm({ initial }: { initial: SettingsValues }) {
               setValues((prev) => ({ ...prev, [f.key]: v }));
               if (errors[f.key]) setErrors((prev) => ({ ...prev, [f.key]: undefined }));
             };
+            if (f.key === "phone")
+              return (
+                <PhoneNumbers
+                  key={f.key}
+                  id={id}
+                  value={values.phone}
+                  onChange={onChange}
+                  pending={pendingPhone}
+                  onPendingChange={(v) => {
+                    setPendingPhone(v);
+                    if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }));
+                  }}
+                  error={errors.phone}
+                />
+              );
             return (
               <div key={f.key}>
                 <label htmlFor={id} className="text-[14px] font-bold">
