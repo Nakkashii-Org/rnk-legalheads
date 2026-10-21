@@ -10,7 +10,7 @@ export default function ErrorSummary({
   return (
     <div ref={ref} tabIndex={-1} role="alert" aria-labelledby="error-summary-title" className="border-2 border-action px-5 py-4 focus:outline-offset-4">
       <h2 id="error-summary-title" className="text-[16px] font-bold">
-        There is a problem
+        Please complete the required fields below.
       </h2>
       <ul className="mt-2 space-y-1 text-[14px]">
         {errors.map((error) => (

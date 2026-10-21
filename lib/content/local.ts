@@ -1,5 +1,5 @@
 import { homeOrder, industries } from "@/lib/content/industries";
-import { jobLayoutPreview, jobs } from "@/lib/content/jobs";
+import { jobs } from "@/lib/content/jobs";
 import { issueLayoutPreviews, issues } from "@/lib/content/newsletters";
 import { people, peopleLayoutPreviews } from "@/lib/content/people";
 import { publicationLayoutPreviews, publications } from "@/lib/content/publications";
@@ -25,7 +25,8 @@ export function buildLocalContent(): ContentData {
       return position >= 0 ? { ...industry, homeOrder: position + 1 } : industry;
     }),
     people: [...people, ...peopleLayoutPreviews],
-    jobs: [...jobs, jobLayoutPreview],
+    // No vacancies in the final screens, so no layout-preview vacancy either.
+    jobs: [...jobs],
     publications: [...publications, ...publicationLayoutPreviews],
     newsletters: [...issues, ...issueLayoutPreviews],
   };

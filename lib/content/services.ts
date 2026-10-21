@@ -12,9 +12,13 @@ export type ServiceGroupKey =
 
 export type ServiceGroup = {
   key: ServiceGroupKey;
-  /** Value used in /services?group= (guide p.10). */
+  /** Value used in /services?group=. */
   alias: string;
+  /** Short label on the /services filter chips. */
+  chip: string;
   name: string;
+  /** One-line description on the homepage service cards. */
+  description: string;
 };
 
 export type Service = {
@@ -24,70 +28,56 @@ export type Service = {
   group: ServiceGroupKey;
   summary: string;
   approved: boolean;
-  /** Publication hold, e.g. Litigation Funding Advisory (guide p.63). */
+  /** Publication hold: never public while set. */
   hold?: boolean;
 };
 
+/**
+ * The six practice groups of the final screens, in their order. The keys are the ones the CMS and
+ * the newsletter lists already use: "people" now holds Private Client & Consumer, and "regulated"
+ * has no services, so it is not listed.
+ */
 export const serviceGroups: ServiceGroup[] = [
-  { key: "business", alias: "Business", name: "Business & Transactions" },
-  { key: "disputes", alias: "Disputes", name: "Disputes & Recovery" },
-  { key: "tax", alias: "Tax", name: "Tax & Trade" },
-  { key: "property", alias: "Property", name: "Property & Projects" },
-  { key: "ip", alias: "IP", name: "IP, Technology & Media" },
-  { key: "people", alias: "People", name: "People & Private Matters" },
-  { key: "regulated", alias: "Regulated", name: "Regulated Sectors & Public Law" },
+  { key: "ip", alias: "IP", chip: "IP", name: "Intellectual Property", description: "Protection, prosecution, ownership, commercialisation and enforcement." },
+  { key: "business", alias: "Business", chip: "Business", name: "Corporate, Finance & Transactions", description: "Corporate advice, commercial agreements, acquisitions and finance." },
+  { key: "disputes", alias: "Disputes", chip: "Disputes", name: "Disputes, Investigations & Recovery", description: "Civil and criminal proceedings, arbitration, investigations and recovery." },
+  { key: "tax", alias: "Tax", chip: "Tax", name: "Tax", description: "GST, indirect tax, tax disputes and investigation response." },
+  { key: "property", alias: "Property", chip: "Property", name: "Real Estate, Projects & Energy", description: "Property, construction, infrastructure and energy matters." },
+  { key: "people", alias: "Private", chip: "Private client", name: "Private Client & Consumer", description: "Succession, family matters and consumer disputes." },
 ];
 
-// All 40 records start unapproved (guide p.27, p.150). Approve individually, never globally.
+// The twenty services of the final screens. IDs and slugs are kept from the earlier catalogue so the
+// CMS records stay linked. Every record starts unapproved; each one is published from the CMS.
 export const services: Service[] = [
-  { id: "S01", slug: "corporate-commercial", title: "Corporate & Commercial", group: "business", summary: "Business formation, governance, commercial agreements and legal support for day-to-day operations.", approved: false },
-  { id: "S02", slug: "mergers-acquisitions", title: "Mergers & Acquisitions", group: "business", summary: "Acquisitions, disposals, joint ventures and transaction documentation, from diligence through completion.", approved: false },
-  { id: "S03", slug: "private-equity-venture-capital-startups", title: "Private Equity, Venture Capital & Startups", group: "business", summary: "Founder arrangements, fundraising, investment documentation and legal support through business growth.", approved: false },
-  { id: "S04", slug: "banking-finance", title: "Banking & Finance", group: "business", summary: "Lending, borrowing, security documents, project finance and financing-related advisory.", approved: false },
-  { id: "S05", slug: "capital-markets-securities", title: "Capital Markets & Securities", group: "business", summary: "Securities transactions, disclosure obligations, listed-company advisory and enforcement matters.", approved: false },
-  { id: "S06", slug: "investment-funds", title: "Investment Funds & Asset Management", group: "business", summary: "Fund structures, investment documents, manager arrangements and legal compliance support.", approved: false },
-  { id: "S07", slug: "competition-antitrust", title: "Competition & Antitrust", group: "business", summary: "Merger-control advice, competition assessments, investigations and compliance programmes.", approved: false },
-  { id: "S08", slug: "foreign-investment-exchange-control", title: "Foreign Investment & Exchange Control", group: "business", summary: "Inbound and outbound investment, cross-border transactions and exchange-control compliance.", approved: false },
-  { id: "S09", slug: "civil-commercial-litigation", title: "Civil & Commercial Litigation", group: "disputes", summary: "Civil suits, commercial claims, interim applications, appeals and enforcement proceedings.", approved: false },
-  { id: "S10", slug: "arbitration", title: "Arbitration", group: "disputes", summary: "Arbitration agreements, domestic and international proceedings, interim relief and award-related litigation.", approved: false },
-  { id: "S11", slug: "mediation-settlement", title: "Mediation & Settlement", group: "disputes", summary: "Negotiated resolution, mediation preparation and the documentation of settlement terms.", approved: false },
-  { id: "S12", slug: "criminal-defence", title: "Criminal Defence", group: "disputes", summary: "Criminal proceedings, bail applications, trial preparation, appeals and related legal representation.", approved: false },
-  { id: "S13", slug: "white-collar-investigations", title: "White-Collar Crime & Investigations", group: "disputes", summary: "Internal investigations, corporate misconduct, financial allegations and regulatory investigations.", approved: false },
-  { id: "S14", slug: "sarfaesi-drt-debt-recovery", title: "SARFAESI, DRT & Debt Recovery", group: "disputes", summary: "Secured-credit enforcement, borrower remedies, DRT and DRAT proceedings, and debt-recovery disputes.", approved: false },
-  { id: "S15", slug: "insolvency-restructuring", title: "Insolvency & Restructuring", group: "disputes", summary: "Financial distress, creditor and debtor advisory, resolution processes and insolvency-related disputes.", approved: false },
-  { id: "S16", slug: "litigation-strategy-portfolio", title: "Litigation Strategy & Portfolio Management", group: "disputes", summary: "Coordinated oversight of multiple disputes, reporting, external counsel and settlement strategy.", approved: false },
-  { id: "S17", slug: "litigation-funding-advisory", title: "Litigation Funding Advisory", group: "disputes", summary: "Legal review of third-party funding arrangements, subject to applicable professional and jurisdictional restrictions.", approved: false, hold: true },
-  { id: "S18", slug: "direct-international-tax", title: "Direct & International Tax", group: "tax", summary: "Tax advice on business structures, transactions, cross-border matters and private-client arrangements.", approved: false },
-  { id: "S19", slug: "gst-indirect-tax", title: "GST & Indirect Tax", group: "tax", summary: "GST and indirect-tax advice, transaction review, notices, classification and credit-related issues.", approved: false },
-  { id: "S20", slug: "customs-international-trade", title: "Customs & International Trade", group: "tax", summary: "Import and export transactions, customs disputes, trade remedies and cross-border compliance.", approved: false },
-  { id: "S21", slug: "tax-litigation-investigations", title: "Tax Litigation & Investigations", group: "tax", summary: "Tax notices, investigations, assessment disputes, appeals and proceedings before relevant fora.", approved: false },
-  { id: "S22", slug: "real-estate-rera", title: "Real Estate & RERA", group: "property", summary: "Title review, property transactions, leasing, development arrangements and real-estate disputes.", approved: false },
-  { id: "S23", slug: "construction-infrastructure", title: "Construction & Infrastructure", group: "property", summary: "Project contracts, procurement, claims, delays, payment disputes and infrastructure transactions.", approved: false },
-  { id: "S24", slug: "energy-natural-resources", title: "Energy & Natural Resources", group: "property", summary: "Energy projects, commercial arrangements, resource transactions and regulatory disputes.", approved: false },
-  { id: "S25", slug: "environment-climate", title: "Environment & Climate", group: "property", summary: "Environmental permissions, compliance reviews, project risk and environmental proceedings.", approved: false },
-  { id: "S26", slug: "intellectual-property", title: "Intellectual Property", group: "ip", summary: "Patents, trade marks, designs, copyright, ownership, licensing and portfolio management.", approved: false },
-  { id: "S27", slug: "ip-disputes-enforcement", title: "IP Disputes & Enforcement", group: "ip", summary: "Infringement, passing off, validity, trade-secret disputes and rights-specific enforcement.", approved: false },
-  { id: "S28", slug: "technology-data-cybersecurity", title: "Technology, Data & Cybersecurity", group: "ip", summary: "Technology contracts, data protection, digital products, cybersecurity response and platform issues.", approved: false },
-  { id: "S29", slug: "media-entertainment-sports", title: "Media, Entertainment & Sports", group: "ip", summary: "Content, production, licensing, advertising, talent, sports agreements and related disputes.", approved: false },
-  { id: "S30", slug: "employment-labour-posh", title: "Employment, Labour & POSH", group: "people", summary: "Employment documents, workplace policies, labour issues, investigations and employment disputes.", approved: false },
-  { id: "S31", slug: "family-matrimonial", title: "Family & Matrimonial", group: "people", summary: "Matrimonial proceedings, family arrangements, maintenance, parenting issues and negotiated resolution.", approved: false },
-  { id: "S32", slug: "private-client-succession", title: "Private Client, Wills & Succession", group: "people", summary: "Wills, estate planning, succession, family businesses and private-wealth legal arrangements.", approved: false },
-  { id: "S33", slug: "consumer-product-liability", title: "Consumer Protection & Product Liability", group: "people", summary: "Consumer claims, product and service disputes, e-commerce issues and business compliance.", approved: false },
-  { id: "S34", slug: "regulatory-public-law", title: "Regulatory & Public Law", group: "regulated", summary: "Regulatory advice, administrative decisions, statutory challenges and constitutional remedies.", approved: false },
-  { id: "S35", slug: "healthcare-life-sciences", title: "Healthcare, Pharmaceuticals & Life Sciences", group: "regulated", summary: "Sector regulation, transactions, commercial agreements, IP and healthcare-related disputes.", approved: false },
-  { id: "S36", slug: "insurance", title: "Insurance", group: "regulated", summary: "Insurance contracts, coverage disputes, claims, regulatory matters and insurance transactions.", approved: false },
-  { id: "S37", slug: "transport-maritime-aviation", title: "Transport, Maritime & Aviation", group: "regulated", summary: "Transport contracts, logistics, maritime and aviation matters, claims and sector regulation.", approved: false },
-  { id: "S38", slug: "education-trusts-nonprofits", title: "Education, Trusts & Non-profits", group: "regulated", summary: "Educational institutions, charitable structures, governance, commercial agreements and regulatory issues.", approved: false },
-  { id: "S39", slug: "immigration-global-mobility", title: "Immigration & Global Mobility", group: "regulated", summary: "Indian immigration and mobility advice, documentation and coordination of overseas legal requirements.", approved: false },
-  { id: "S40", slug: "government-contracts-procurement", title: "Government Contracts & Procurement", group: "regulated", summary: "Tender documents, public contracts, bid-related disputes and project implementation.", approved: false },
+  { id: "S26", slug: "intellectual-property", title: "Intellectual Property", group: "ip", summary: "Protection, prosecution, ownership, commercialisation and management of patents, trade marks, designs and copyright, with coordinated support for Indian and international portfolios.", approved: false },
+  { id: "S27", slug: "ip-disputes-enforcement", title: "IP Disputes & Enforcement", group: "ip", summary: "Infringement, passing off, validity, oppositions and rectifications, patent and trade mark disputes, anti-counterfeiting, online enforcement and related commercial claims.", approved: false },
+  { id: "S01", slug: "corporate-commercial", title: "Corporate & Commercial", group: "business", summary: "Business formation, governance, shareholder arrangements, commercial contracts and day-to-day legal support, with particular attention to IP- and technology-intensive businesses.", approved: false },
+  { id: "S02", slug: "mergers-acquisitions", title: "Mergers & Acquisitions", group: "business", summary: "Acquisitions, disposals, business transfers and joint ventures, from structuring and due diligence through documentation, closing and post-closing implementation.", approved: false },
+  { id: "S04", slug: "banking-finance", title: "Banking & Finance", group: "business", summary: "Borrowing, lending and security documentation, refinancing, structured arrangements and finance-related advisory for businesses, promoters and lenders.", approved: false },
+  { id: "S09", slug: "civil-commercial-litigation", title: "Civil & Commercial Litigation", group: "disputes", summary: "Civil suits and commercial disputes involving contracts, shareholders, property, recovery, injunctions, business relationships and enforcement of rights.", approved: false },
+  { id: "S10", slug: "arbitration", title: "Arbitration", group: "disputes", summary: "Domestic and cross-border commercial arbitration, interim relief, arbitral procedure, hearings, challenges and enforcement of awards.", approved: false },
+  { id: "S11", slug: "mediation-settlement", title: "Mediation & Settlement", group: "disputes", summary: "Pre-litigation and pending-dispute negotiations, mediation preparation, structured settlements and implementation of agreed resolutions.", approved: false },
+  { id: "S12", slug: "criminal-defence", title: "Criminal Defence", group: "disputes", summary: "Defence and representation in criminal complaints, investigations, bail, trial proceedings, appeals and criminal issues arising from commercial or personal disputes.", approved: false },
+  { id: "S13", slug: "white-collar-investigations", title: "White-Collar Crime & Investigations", group: "disputes", summary: "Corporate and financial misconduct, internal investigations, fraud-related allegations, regulatory inquiries and connected criminal or commercial proceedings.", approved: false },
+  { id: "S14", slug: "sarfaesi-drt-debt-recovery", title: "SARFAESI, DRT & Debt Recovery", group: "disputes", summary: "Secured-credit enforcement, borrower and guarantor remedies, DRT and DRAT proceedings, negotiated settlements and recovery disputes.", approved: false },
+  { id: "S15", slug: "insolvency-restructuring", title: "Insolvency & Restructuring", group: "disputes", summary: "Financial distress, creditor and debtor advisory, insolvency proceedings, resolution plans, restructuring and disputes arising from the insolvency process.", approved: false },
+  { id: "S19", slug: "gst-indirect-tax", title: "GST & Indirect Tax", group: "tax", summary: "GST and indirect-tax advice on transactions, classification, input tax credit, registrations, documentation, notices, refunds and recurring business issues.", approved: false },
+  { id: "S21", slug: "tax-litigation-investigations", title: "Tax Litigation & Investigations", group: "tax", summary: "Tax notices, investigations, adjudication, assessment disputes, appeals and court proceedings involving direct and indirect tax issues.", approved: false },
+  { id: "S22", slug: "real-estate-rera", title: "Real Estate & RERA", group: "property", summary: "Title review, acquisitions and disposals, leasing, development arrangements, RERA matters and property disputes for owners, developers, occupiers and investors.", approved: false },
+  { id: "S23", slug: "construction-infrastructure", title: "Construction & Infrastructure", group: "property", summary: "Project contracts, procurement, construction claims, delays, variations, payment disputes and legal support for infrastructure and development projects.", approved: false },
+  { id: "S24", slug: "energy-natural-resources", title: "Energy & Natural Resources", group: "property", summary: "Energy projects, commercial and supply arrangements, project development, investments, regulatory issues and disputes involving energy and natural-resource businesses.", approved: false },
+  { id: "S32", slug: "private-client-succession", title: "Private Client, Wills & Succession", group: "people", summary: "Wills, estate and succession planning, probate and administration, family settlements, business succession and disputes concerning private assets.", approved: false },
+  { id: "S31", slug: "family-matrimonial", title: "Family & Matrimonial", group: "people", summary: "Matrimonial proceedings, divorce, maintenance, parenting issues, family arrangements, protective remedies and negotiated resolution of personal disputes.", approved: false },
+  { id: "S33", slug: "consumer-product-liability", title: "Consumer Protection & Product Liability", group: "people", summary: "Consumer complaints, product and service disputes, e-commerce issues, product-liability claims and legal support for businesses on consumer-facing terms and processes.", approved: false },
 ];
 
 export function groupHref(group: ServiceGroup): string {
   return `/services?group=${encodeURIComponent(group.alias)}`;
 }
 
-export function getServiceGroup(key: ServiceGroupKey): ServiceGroup {
-  return serviceGroups.find((group) => group.key === key)!;
+/** The group a service belongs to (records saved before the six-group catalogue fall back to none). */
+export function getServiceGroup(key: ServiceGroupKey): ServiceGroup | undefined {
+  return serviceGroups.find((group) => group.key === key);
 }
 
 /** Accepts the short alias (?group=Business) or the key, case-insensitively. */
@@ -99,10 +89,10 @@ export function findGroupByAlias(value: string | undefined): ServiceGroup | unde
 
 export function serviceSearchText(service: Service, detail: ServiceDetail | undefined): string {
   const scope = detail ? detail.scope.map((area) => `${area.title} ${area.text}`).join(" ") : "";
-  return `${service.title} ${service.summary} ${getServiceGroup(service.group).name} ${scope}`.toLowerCase();
+  return `${service.title} ${service.summary} ${getServiceGroup(service.group)?.name ?? ""} ${scope}`.toLowerCase();
 }
 
-/** Group and keyword filters combine (guide p.26). Every query word must match. */
+/** Group and keyword filters combine. Every query word must match. */
 export function filterServices(
   list: Service[],
   group: ServiceGroup | undefined,
@@ -118,7 +108,7 @@ export function filterServices(
 
 export type GroupWithServices = ServiceGroup & { services: Service[] };
 
-/** Groups that have at least one of the given services, in the guide's order. */
+/** Groups that have at least one of the given services, in the screens' order. */
 export function groupServices(visible: Service[]): GroupWithServices[] {
   return serviceGroups
     .map((group) => ({ ...group, services: visible.filter((s) => s.group === group.key) }))

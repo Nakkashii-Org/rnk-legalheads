@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Arrow from "@/components/ui/Arrow";
-import ContactCta from "@/components/ui/ContactCta";
-import DraftNote from "@/components/ui/DraftNote";
+import ServiceCard from "@/components/services/ServiceCard";
 import PageHero from "@/components/ui/PageHero";
 import { getContent } from "@/lib/content/source";
 
 type Params = Promise<{ slug: string }>;
 
-// Only approved sector pages exist; unfinished sectors are a 404 (guide p.115).
+// Only approved sector pages exist; unfinished sectors are a 404.
 // Unknown slugs render on request (then 404), so a signed-in staff preview can open unpublished drafts.
 export const dynamicParams = true;
 
@@ -33,9 +31,7 @@ export default async function IndustryPage({ params }: { params: Params }) {
   if (!industry) notFound();
 
   const publicServices = content.publicServices();
-  const related = industry.serviceIds
-    .map((id) => publicServices.find((service) => service.id === id))
-    .filter((service) => service !== undefined);
+  const related = industry.serviceIds.map((id) => publicServices.find((service) => service.id === id)).filter((service) => service !== undefined);
 
   return (
     <>
@@ -46,62 +42,46 @@ export default async function IndustryPage({ params }: { params: Params }) {
         lead={industry.intro ?? industry.summary}
       >
         <Link href={`/contact?industry=${industry.slug}`} className="btn btn-primary mt-8">
-          Contact the team <Arrow />
+          Contact the Team
         </Link>
       </PageHero>
 
       {industry.overview && (
         <section aria-label="Sector overview" className="shell pt-12 md:pt-16">
-          <p className="max-w-[780px]">{industry.overview}</p>
+          <p className="max-w-[780px] text-muted">{industry.overview}</p>
         </section>
       )}
 
       {industry.workAreas && industry.workAreas.length > 0 && (
-        <section aria-labelledby="work-areas-title" className="shell pt-12 md:pt-16">
-          <h2 id="work-areas-title" className="section-title">
-            Current legal work
+        <section aria-labelledby="focus-title" className="shell pt-12 md:pt-16">
+          <h2 id="focus-title" className="section-title">
+            Areas of focus
           </h2>
-          <ul className="mt-8 grid gap-x-8 sm:grid-cols-2">
+          <ul className="mt-6 grid gap-x-8 md:grid-cols-2">
             {industry.workAreas.map((area) => (
-              <li key={area.title} className="border-t border-line pb-6 pt-4">
-                <h3 className="text-[15px] font-bold leading-[22px]">{area.title}</h3>
-                <p className="mt-2 text-[14px] leading-[22px] text-muted">{area.text}</p>
+              <li key={area.title} className="border-t border-line py-6">
+                <h3 className="font-serif text-[20px] leading-[28px]">{area.title}</h3>
+                {area.text && <p className="mt-2 text-[14px] leading-[22px] text-muted">{area.text}</p>}
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <section aria-labelledby="related-work-title" className="shell grid gap-10 py-14 md:grid-cols-2 md:gap-16 md:py-20">
-        <div>
-          <h2 id="related-work-title" className="section-title">
-            Related legal work
+      {related.length > 0 && (
+        <section aria-labelledby="related-title" className="shell pb-16 pt-12 md:pb-24 md:pt-16">
+          <h2 id="related-title" className="section-title">
+            Related Services
           </h2>
-          <p className="mt-4 max-w-[440px] text-muted">
-            Use the service pages to see the scope of each practice and the subjects covered.
-          </p>
-          {!industry.approved && (
-            <DraftNote className="mt-6 bg-warm">
-              Sector-specific introduction and evidence of experience require approval before publication.
-            </DraftNote>
-          )}
-        </div>
-        <ul>
-          {related.map((service) => (
-            <li key={service.id}>
-              <Link href={`/services/${service.slug}`} className="group block border-t border-line py-5">
-                <span className="flex items-start justify-between gap-4">
-                  <span className="font-serif text-[20px] leading-[28px] group-hover:text-action">{service.title}</span>
-                  <Arrow className="mt-1 text-rnk" />
-                </span>
-                <span className="mt-2 block text-[14px] leading-[22px] text-muted">{service.summary}</span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <ContactCta href={`/contact?industry=${industry.slug}`} />
+          <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((service) => (
+              <li key={service.id}>
+                <ServiceCard service={service} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </>
   );
 }

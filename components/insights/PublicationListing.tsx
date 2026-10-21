@@ -5,7 +5,6 @@ import InsightsTabs from "@/components/insights/InsightsTabs";
 import PublicationCard from "@/components/insights/PublicationCard";
 import Pagination from "@/components/ui/Pagination";
 import PageHero from "@/components/ui/PageHero";
-import type { Crumb } from "@/components/ui/Breadcrumb";
 import {
   filterPublications,
   type Publication,
@@ -27,7 +26,7 @@ type ListingProps = {
   type?: PublicationType;
   title: string;
   lead: string;
-  breadcrumb: Crumb[];
+  /** Shown when nothing of this type is published (final screens: points to the articles). */
   emptyText: string;
   params: RawParams;
 };
@@ -47,7 +46,7 @@ function yearsOf(list: Publication[]): string[] {
   return [...new Set(list.map((p) => p.publishedAt?.slice(0, 4)).filter((y): y is string => Boolean(y)))].sort().reverse();
 }
 
-export default async function PublicationListing({ basePath, type, title, lead, breadcrumb, emptyText, params }: ListingProps) {
+export default async function PublicationListing({ basePath, type, title, lead, emptyText, params }: ListingProps) {
   const content = await getContent();
   const all = content.publicPublications(type);
   const services = content.publicServices();
@@ -84,7 +83,7 @@ export default async function PublicationListing({ basePath, type, title, lead, 
 
   return (
     <>
-      <PageHero breadcrumb={breadcrumb} eyebrow="Knowledge & publications" title={title} lead={lead} />
+      <PageHero eyebrow="Knowledge" title={title} lead={lead} />
 
       <div className="shell pb-16 pt-8 md:pb-24">
         <InsightsTabs current={basePath} />
@@ -92,7 +91,7 @@ export default async function PublicationListing({ basePath, type, title, lead, 
         <Form action={basePath} scroll={false} role="search" aria-label={`Search ${title.toLowerCase()}`} className="mt-8">
           <div className="flex">
             <label htmlFor="insights-search" className="sr-only">
-              Search topics or keywords
+              Search insights
             </label>
             <input
               key={query}
@@ -101,7 +100,7 @@ export default async function PublicationListing({ basePath, type, title, lead, 
               name="q"
               defaultValue={query}
               maxLength={MAX_QUERY_LENGTH}
-              placeholder="Search topics or keywords"
+              placeholder="Search insights"
               className="h-12 min-w-0 flex-1 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
             />
             <button type="submit" className="btn btn-primary h-12 shrink-0 px-6">
@@ -138,21 +137,6 @@ export default async function PublicationListing({ basePath, type, title, lead, 
               </>
             )}
 
-            <label htmlFor="insights-year" className="sr-only">
-              Publication year
-            </label>
-            <select key={`y-${year}`} id="insights-year" name="year" defaultValue={year ?? ""} className={selectClass}>
-              <option value="">All years</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-
-            <Link href={basePath} scroll={false} className="link-action text-[13px]">
-              Clear filters
-            </Link>
           </div>
         </Form>
 
@@ -165,18 +149,23 @@ export default async function PublicationListing({ basePath, type, title, lead, 
 
         {all.length === 0 ? (
           // Honest empty state; no fictional records to fill the design (guide p.122).
-          <p role="status" className="mt-10 max-w-[620px] text-muted">
-            {emptyText}
-          </p>
+          <div role="status" className="mt-10 border border-line bg-warm px-6 py-10 md:px-10">
+            <span aria-hidden="true" className="block h-[2px] w-8 bg-rnk" />
+            <h2 className="mt-5 font-serif text-[24px] leading-[32px]">Explore our articles.</h2>
+            <p className="mt-2 max-w-[620px] text-[15px] text-muted">{emptyText}</p>
+            <Link href="/articles" className="btn btn-primary mt-6">
+              Browse articles
+            </Link>
+          </div>
         ) : (
           <>
-            <p role="status" aria-live="polite" className="mt-6 text-[11px] uppercase leading-4 tracking-[0.14em] text-muted">
+            <p role="status" aria-live="polite" className="sr-only">
               {results.length} {results.length === 1 ? "publication" : "publications"}
               {service && ` / ${service.title}`}
             </p>
 
             {pageItems.length > 0 ? (
-              <ul className="mt-4 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+              <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
                 {pageItems.map((p) => (
                   <li key={`${p.type}-${p.slug}`}>
                     <PublicationCard publication={p} />

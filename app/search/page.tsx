@@ -1,30 +1,32 @@
 import type { Metadata } from "next";
 import Form from "next/form";
 import Link from "next/link";
-import Arrow from "@/components/ui/Arrow";
 import Highlight from "@/components/ui/Highlight";
 import PageHero from "@/components/ui/PageHero";
-import { personSearchText } from "@/lib/content/people";
+import ServiceCard from "@/components/services/ServiceCard";
 import {
   publicationHref,
   publicationSearchText,
   publicationTypeMeta,
 } from "@/lib/content/publications";
-import { getServiceGroup, serviceSearchText } from "@/lib/content/services";
+import { serviceSearchText } from "@/lib/content/services";
 import { getContent } from "@/lib/content/source";
 import { MAX_QUERY_LENGTH, matchesAll, queryWords } from "@/lib/search";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 type Result = { key: string; label: string; title: string; excerpt: string; href: string };
-type Group = { id: "services" | "people" | "insights"; heading: string; results: Result[] };
+type Group = { id: "services" | "industries" | "insights"; heading: string; results: Result[] };
 
 const TYPE_FILTERS = [
-  { id: "", label: "All" },
+  { id: "", label: "All results" },
   { id: "services", label: "Services" },
-  { id: "people", label: "People" },
+  { id: "industries", label: "Industries" },
   { id: "insights", label: "Insights" },
 ] as const;
+
+// Services shown before a term is entered (final screens).
+const SUGGESTED_SERVICES = ["S26", "S09", "S10", "S19"];
 
 function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value) ?? "";
@@ -33,7 +35,7 @@ function first(value: string | string[] | undefined): string {
 // Search result pages are never indexed (guide p.161).
 export const metadata: Metadata = {
   title: "Search",
-  description: "Find a service, a lawyer or a publication.",
+  description: "Search services, industries and insights.",
   robots: { index: false, follow: true },
 };
 
@@ -48,16 +50,16 @@ async function runSearch(query: string): Promise<Group[]> {
     .filter((s) => matchesAll(serviceSearchText(s, content.serviceDetail(s.id)), words))
     .map((s) => ({
       key: s.id,
-      label: `Service / ${getServiceGroup(s.group).name}`,
+      label: "Service",
       title: s.title,
       excerpt: s.summary,
       href: `/services/${s.slug}`,
     }));
 
-  const people: Result[] = content
-    .publicPeople()
-    .filter((p) => matchesAll(personSearchText(p, publicServices), words))
-    .map((p) => ({ key: p.slug, label: `Person / ${p.role}`, title: p.name, excerpt: p.practiceSummary, href: `/people/${p.slug}` }));
+  const industries: Result[] = content
+    .publicIndustries()
+    .filter((i) => matchesAll(`${i.name} ${i.summary} ${i.intro ?? ""} ${(i.workAreas ?? []).map((w) => w.title).join(" ")}`, words))
+    .map((i) => ({ key: i.slug, label: "Industry", title: i.name, excerpt: i.summary, href: `/industries/${i.slug}` }));
 
   const insights: Result[] = [
     ...content
@@ -85,7 +87,7 @@ async function runSearch(query: string): Promise<Group[]> {
 
   return [
     { id: "services", heading: "Services", results: services },
-    { id: "people", heading: "People", results: people },
+    { id: "industries", heading: "Industries", results: industries },
     { id: "insights", heading: "Insights", results: insights },
   ];
 }
@@ -98,6 +100,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
   const words = queryWords(query);
   const groups = await runSearch(query);
+  const suggested = query ? [] : (await getContent()).publicServices().filter((s) => SUGGESTED_SERVICES.includes(s.id));
   const total = groups.reduce((n, g) => n + g.results.length, 0);
   const shown = groups.filter((g) => (!type || g.id === type) && g.results.length > 0);
 
@@ -111,12 +114,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
   return (
     <>
-      <PageHero
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Search RNK Legalheads" }]}
-        eyebrow="Site search"
-        title="Search RNK Legalheads"
-        lead="Find a service, a lawyer or a publication."
-      />
+      <PageHero eyebrow="Search" title="Search RNK Legalheads" lead="Search services, industries and insights." />
 
       <div className="shell pb-16 pt-8 md:pb-24 md:pt-10">
         <Form action="/search" role="search" aria-label="Search the website" className="bg-warm p-5 md:p-8">
@@ -132,7 +130,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
               name="q"
               defaultValue={query}
               maxLength={MAX_QUERY_LENGTH}
-              placeholder="Search a service, lawyer or topic"
+              placeholder="Search"
               autoComplete="off"
               className="h-12 min-w-0 flex-1 border border-[#8a8782] bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal"
             />
@@ -162,20 +160,33 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
         </Form>
 
         {!query ? (
-          <p className="mt-10 text-muted">Enter a term to search our services, people and publications.</p>
+          suggested.length > 0 && (
+            <section aria-labelledby="suggested-title" className="mt-12">
+              <h2 id="suggested-title" className="section-title">
+                Explore our services
+              </h2>
+              <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
+                {suggested.map((service) => (
+                  <li key={service.id}>
+                    <ServiceCard service={service} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
         ) : (
           <>
             <p role="status" aria-live="polite" className="mt-8 text-[11px] uppercase leading-4 tracking-[0.14em] text-muted">
-              {total} {total === 1 ? "result" : "results"}
+              {total} {total === 1 ? "result" : "results"} for “{query}”
             </p>
 
             {shown.length === 0 ? (
               <div className="mt-6 border border-line bg-warm px-6 py-10 md:px-10">
                 <span aria-hidden="true" className="block h-[2px] w-8 bg-rnk" />
-                <h2 className="mt-5 font-serif text-[24px] leading-[32px]">No results found.</h2>
-                <p className="mt-2 text-[15px] text-muted">Try a different term, or browse the services directory.</p>
+                <h2 className="mt-5 font-serif text-[24px] leading-[32px]">No results match your search.</h2>
+                <p className="mt-2 text-[15px] text-muted">Try a different term or explore our services.</p>
                 <Link href="/services" className="btn btn-primary mt-6">
-                  Browse services <Arrow />
+                  Explore services
                 </Link>
               </div>
             ) : (
@@ -196,8 +207,10 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
                             <span className="mt-1 block text-[14px] leading-[22px] text-muted">
                               <Highlight text={result.excerpt} words={words} />
                             </span>
+                            <span className="mt-3 block text-[13px] font-bold underline decoration-1 underline-offset-[6px] group-hover:text-action">
+                              {result.label === "Service" ? "View service" : result.label === "Industry" ? "Explore industry" : "Read more"}
+                            </span>
                           </span>
-                          <Arrow className="mt-8 text-rnk" />
                         </Link>
                       </li>
                     ))}

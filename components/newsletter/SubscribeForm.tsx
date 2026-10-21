@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ErrorSummary from "@/components/forms/ErrorSummary";
 import TopicFieldset from "@/components/forms/TopicFieldset";
-import Arrow from "@/components/ui/Arrow";
 import { SUBSCRIPTION_NOTICE_VERSION, validateSubscribe, type SubscribeErrors, type SubscribeFields } from "@/lib/newsletter";
 
 type Status = "idle" | "sending" | "unavailable" | "rate-limited";
@@ -69,7 +68,7 @@ export default function SubscribeForm({ initialTopics = [] }: { initialTopics?: 
     .map((key) => ({ field: key, message: errors[key]! }));
 
   return (
-    <form onSubmit={onSubmit} noValidate aria-label="Subscribe to RNK legal updates" className="space-y-6">
+    <form onSubmit={onSubmit} noValidate aria-label="Subscribe to RNK Legalheads Insights" className="space-y-6">
       <ErrorSummary ref={summaryRef} errors={errorList} />
 
       <div>
@@ -125,8 +124,11 @@ export default function SubscribeForm({ initialTopics = [] }: { initialTopics?: 
             className="mt-0.5 h-5 w-5 shrink-0 accent-charcoal"
           />
           <label htmlFor="consent" className="text-[14px] leading-[22px]">
-            I agree to receive the legal updates I select from RNK Legalheads. I can unsubscribe or change my
-            preferences at any time.
+            I would like to receive RNK Legalheads Insights by email on the topics I select. I have read the{" "}
+            <Link href="/privacy-policy" className="underline underline-offset-4">
+              Privacy Policy
+            </Link>{" "}
+            and understand that I can unsubscribe at any time.
           </label>
         </div>
         {errors.consent && (
@@ -134,13 +136,6 @@ export default function SubscribeForm({ initialTopics = [] }: { initialTopics?: 
             {errors.consent}
           </p>
         )}
-        <p className="mt-3 text-[13px] leading-[20px] text-muted">
-          We use your email address and selected topics to manage your subscription. Read our{" "}
-          <Link href="/privacy-policy" className="underline underline-offset-4">
-            Privacy Policy
-          </Link>
-          .
-        </p>
       </div>
 
       {(status === "unavailable" || status === "rate-limited") && (
@@ -155,8 +150,7 @@ export default function SubscribeForm({ initialTopics = [] }: { initialTopics?: 
       )}
 
       <button type="submit" disabled={status === "sending"} className="btn btn-primary disabled:cursor-wait disabled:opacity-70">
-        {status === "sending" ? "Sending…" : "Send confirmation email"}
-        {status !== "sending" && <Arrow />}
+        {status === "sending" ? "Sending…" : "Subscribe"}
       </button>
     </form>
   );

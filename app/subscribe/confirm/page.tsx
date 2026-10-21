@@ -14,14 +14,20 @@ function Confirmed({ manageHref, note }: { manageHref: string; note?: React.Reac
   return (
     <StatusPanel
       note={note}
-      title="Your subscription is confirmed"
+      eyebrow="RNK Legalheads LLP"
+      title="Your subscription is confirmed."
       actions={
-        <Link href={manageHref} className="btn btn-primary">
-          Manage preferences <Arrow />
-        </Link>
+        <>
+          <Link href="/insights" className="btn btn-primary">
+            Browse insights
+          </Link>
+          <Link href={manageHref} className="link-action">
+            Manage preferences <Arrow />
+          </Link>
+        </>
       }
     >
-      <p>Your subscription is confirmed. You can change your topics or unsubscribe at any time using the links in our emails.</p>
+      <p>You can manage your topics or unsubscribe using the links in any newsletter.</p>
     </StatusPanel>
   );
 }

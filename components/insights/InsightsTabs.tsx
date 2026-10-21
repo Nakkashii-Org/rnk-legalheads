@@ -1,12 +1,11 @@
 import Link from "next/link";
 
 const tabs = [
-  { label: "All insights", href: "/insights" },
+  { label: "All", href: "/insights" },
   { label: "Articles", href: "/articles" },
-  { label: "Recent judgments", href: "/recent-judgments" },
-  { label: "Legal updates", href: "/legal-updates" },
+  { label: "Recent Judgments", href: "/recent-judgments" },
+  { label: "Legal Updates", href: "/legal-updates" },
   { label: "Newsletters", href: "/newsletters" },
-  { label: "Careers", href: "/careers" },
 ];
 
 /** Type navigation shared by the Insights hub and each publication listing (K01). */

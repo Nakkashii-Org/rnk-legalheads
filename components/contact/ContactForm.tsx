@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import ErrorSummary from "@/components/forms/ErrorSummary";
-import Arrow from "@/components/ui/Arrow";
 import {
   GENERAL_ENQUIRY,
   MESSAGE_MAX,
@@ -19,7 +18,7 @@ export type EnquiryContext = { kind: "person" | "industry"; slug: string; label:
 
 type Status = "idle" | "sending" | "unavailable" | "rate-limited";
 
-const FIELD_ORDER: (keyof ContactFields)[] = ["name", "email", "phone", "organisation", "service", "message", "acknowledged"];
+const FIELD_ORDER: (keyof ContactFields)[] = ["name", "email", "organisation", "service", "message", "acknowledged"];
 
 const inputClass =
   "mt-1.5 h-12 w-full border bg-canvas px-4 text-[15px] placeholder:text-muted focus:border-charcoal aria-[invalid=true]:border-action";
@@ -28,10 +27,13 @@ export default function ContactForm({
   services,
   initialService,
   context,
+  email,
 }: {
   services: ServiceOption[];
   initialService: string;
   context?: EnquiryContext;
+  /** The firm's enquiry email, offered when sending fails. */
+  email?: string;
 }) {
   const router = useRouter();
   const summaryRef = useRef<HTMLDivElement>(null);
@@ -165,24 +167,6 @@ export default function ContactForm({
           {fieldError("email")}
         </div>
         <div>
-          <label htmlFor="phone" className="text-[14px] font-bold">
-            Phone <span className="font-normal text-muted">(optional)</span>
-          </label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            autoComplete="tel"
-            value={fields.phone}
-            onChange={(e) => update("phone", e.target.value)}
-            aria-invalid={Boolean(errors.phone)}
-            aria-describedby={describedBy("phone")}
-            placeholder="Country code and number"
-            className={`${inputClass} ${borderFor("phone")}`}
-          />
-          {fieldError("phone")}
-        </div>
-        <div>
           <label htmlFor="organisation" className="text-[14px] font-bold">
             Organisation <span className="font-normal text-muted">(optional)</span>
           </label>
@@ -213,6 +197,9 @@ export default function ContactForm({
           aria-describedby={describedBy("service")}
           className={`${inputClass} ${borderFor("service")} px-3`}
         >
+          <option value="" disabled>
+            Select a service
+          </option>
           <option value={GENERAL_ENQUIRY}>General enquiry</option>
           <option value={NOT_SURE}>Not sure</option>
           {services.length > 0 && (
@@ -230,7 +217,7 @@ export default function ContactForm({
 
       <div>
         <label htmlFor="message" className="text-[14px] font-bold">
-          Your enquiry
+          Message
         </label>
         <textarea
           id="message"
@@ -245,7 +232,7 @@ export default function ContactForm({
           className={`${inputClass} ${borderFor("message")} h-auto py-3 leading-[24px]`}
         />
         <p id="message-hint" className="mt-1.5 flex flex-wrap justify-between gap-2 text-[13px] text-muted">
-          <span>Maximum 1,500 characters. Do not include documents or sensitive details.</span>
+          <span>Please do not include confidential documents, sensitive personal information or unpublished technical details.</span>
           <span aria-hidden="true">
             {fields.message.length.toLocaleString("en-GB")} / {MESSAGE_MAX.toLocaleString("en-GB")}
           </span>
@@ -271,12 +258,11 @@ export default function ContactForm({
             className="mt-0.5 h-5 w-5 shrink-0 accent-charcoal"
           />
           <label htmlFor="acknowledged" className="text-[14px] leading-[22px]">
-            I understand that submitting this form does not create an advocate-client relationship. My details will be
-            used to assess and respond to this enquiry as described in the{" "}
+            I have read the{" "}
             <Link href="/privacy-policy" className="underline underline-offset-4">
               Privacy Policy
-            </Link>
-            .
+            </Link>{" "}
+            and understand that submitting this enquiry does not create an advocate-client relationship.
           </label>
         </div>
         {fieldError("acknowledged")}
@@ -284,18 +270,24 @@ export default function ContactForm({
 
       {(status === "unavailable" || status === "rate-limited") && (
         <div role="alert" className="border-l-2 border-action bg-warm px-5 py-4">
-          <h2 className="font-serif text-[20px] leading-[28px]">Your enquiry could not be sent</h2>
+          <h2 className="font-serif text-[20px] leading-[28px]">We could not send your enquiry.</h2>
           <p className="mt-2 text-[14px] leading-[22px] text-muted">
             {status === "rate-limited"
               ? "Too many attempts were made in a short time. Please wait a few minutes and try again. Your message remains in the form."
-              : "We could not complete your submission. Your message remains in the form. Please try again or use the published contact details. Do not rely on this form for urgent deadlines."}
+              : email
+                ? `Please try again or email ${email}.`
+                : "Please try again."}
           </p>
+          {email && (
+            <a href={`mailto:${email}`} className="mt-3 inline-flex min-h-11 items-center text-[13px] font-bold underline underline-offset-4 hover:text-action">
+              Email the firm
+            </a>
+          )}
         </div>
       )}
 
       <button type="submit" disabled={status === "sending"} aria-disabled={status === "sending"} className="btn btn-primary disabled:cursor-wait disabled:opacity-70">
         {status === "sending" ? "Sending…" : status === "unavailable" || status === "rate-limited" ? "Try again" : "Send enquiry"}
-        {status !== "sending" && <Arrow />}
       </button>
     </form>
   );

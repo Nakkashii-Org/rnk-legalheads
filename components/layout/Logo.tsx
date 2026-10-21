@@ -1,10 +1,23 @@
 import Link from "next/link";
 
 /**
- * Text rendering of the supplied wordmark: a red bar spanning "RNK", above "RNK Legalheads".
- * Replace with the firm's vector logo file once supplied (guide p.8, R02).
+ * The firm's logo (vector file supplied by the firm: public/rnk-legalheads-logo.svg).
+ * `onDark` uses the copy with white lettering (same red bar) for the dark footer.
  */
-export default function Logo({ href = "/", label = "RNK Legalheads home" }: { href?: string; label?: string }) {
+export default function Logo({ href = "/", label = "RNK Legalheads home", onDark = false }: { href?: string; label?: string; onDark?: boolean }) {
+  return (
+    <Link href={href} className="inline-flex shrink-0 py-2" aria-label={label}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- a small vector logo needs no image optimisation */}
+      <img src={onDark ? "/rnk-legalheads-logo-white.svg" : "/rnk-legalheads-logo.svg"} alt="" width={830} height={134} className="h-[26px] w-auto md:h-[30px]" />
+    </Link>
+  );
+}
+
+/**
+ * Earlier text rendering of the wordmark: a red bar spanning "RNK", above "RNK Legalheads".
+ * Kept for now, unused, as a fallback; the SVG above is the logo shown on the website.
+ */
+export function TextLogo({ href = "/", label = "RNK Legalheads home" }: { href?: string; label?: string }) {
   return (
     <Link href={href} className="inline-flex py-2" aria-label={label}>
       <span

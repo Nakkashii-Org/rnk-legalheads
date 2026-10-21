@@ -137,12 +137,11 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
           onMouseEnter={() => setHovering(true)}
           onMouseLeave={() => setHovering(false)}
         >
-          <p className="eyebrow">RNK Legalheads / Established 2024</p>
+          <p className="eyebrow">RNK Legalheads LLP / Established 2024</p>
           <h1 className="mt-6 font-serif text-[45px] font-normal leading-[49px] tracking-[-0.02em] md:text-[64px] md:leading-[68px]">
-            A full-service
-            <br />
-            law firm.
+            Legal advice and representation.
           </h1>
+          <p className="mt-4 text-[15px] font-bold leading-[24px]">Built on Trust, Driven by Commitment.</p>
 
           <div className="mt-7 grid" aria-live={playing ? "off" : "polite"}>
             {slides.map((slide, i) => {
@@ -232,9 +231,6 @@ export default function HeroSlider({ slides }: { slides: HeroSlide[] }) {
               <ArchitecturalArt variant={i} />
             </div>
           ))}
-          <p className="absolute bottom-4 left-4 bg-canvas px-2.5 py-1 text-[10px] uppercase leading-4 tracking-[0.12em] text-muted">
-            Architectural study / Illustrative
-          </p>
         </div>
       </div>
     </section>

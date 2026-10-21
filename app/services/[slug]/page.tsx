@@ -3,10 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import PublicationCard from "@/components/insights/PublicationCard";
 import ServiceCard from "@/components/services/ServiceCard";
-import Arrow from "@/components/ui/Arrow";
-import ContactCta from "@/components/ui/ContactCta";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
+import { relatedNotes, serviceMaxims } from "@/lib/content/service-details";
 import { getServiceGroup } from "@/lib/content/services";
 import { getContent } from "@/lib/content/source";
 
@@ -30,6 +29,13 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   };
 }
 
+/** Paragraphs of a text field, separated by blank lines. */
+const paragraphs = (text: string) =>
+  text
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
 export default async function ServicePage({ params }: { params: Params }) {
   const content = await getContent();
   const service = content.publicService((await params).slug);
@@ -38,16 +44,14 @@ export default async function ServicePage({ params }: { params: Params }) {
 
   const group = getServiceGroup(service.group);
   const publicServices = content.publicServices();
-  const related = detail.related
-    .map((id) => publicServices.find((s) => s.id === id))
-    .filter((s) => s !== undefined);
-  // Up to three approved publications tagged to this service (guide p.30).
+  const related = detail.related.map((id) => publicServices.find((s) => s.id === id)).filter((s) => s !== undefined);
   const insights = content.publicationsForService(service.id);
+  const maxim = serviceMaxims[service.id];
 
   const sections = [
     { id: "overview", label: "Overview" },
-    { id: "scope", label: "Scope of work" },
-    ...(related.length > 0 ? [{ id: "related", label: "Related services" }] : []),
+    { id: "scope", label: "Scope of Work" },
+    ...(related.length > 0 ? [{ id: "related", label: "Related Services" }] : []),
     { id: "insights", label: "Insights" },
   ];
 
@@ -55,7 +59,7 @@ export default async function ServicePage({ params }: { params: Params }) {
     <>
       <PageHero
         breadcrumb={[{ label: "Home", href: "/" }, { label: "Services", href: "/services" }, { label: service.title }]}
-        eyebrow={group.name}
+        eyebrow={group?.name ?? "Services"}
         title={service.title}
         lead={service.summary}
       >
@@ -64,19 +68,13 @@ export default async function ServicePage({ params }: { params: Params }) {
             Publication hold: written legal and ethics clearance is required before this page can be published.
           </DraftNote>
         )}
-        <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
-          <Link href={`/contact?service=${service.slug}`} className="btn btn-primary">
-            Contact the team <Arrow />
-          </Link>
-          <Link href={`/insights?service=${service.slug}`} className="link-action">
-            Related insights <Arrow />
-          </Link>
-        </div>
+        <Link href={`/contact?service=${service.slug}`} className="btn btn-primary mt-8">
+          Contact the Team
+        </Link>
       </PageHero>
 
-      {/* In-page links (guide p.30) */}
       <nav aria-label="On this page" className="shell">
-        <ul className="-mx-[var(--gutter)] flex gap-7 overflow-x-auto whitespace-nowrap border-b border-line px-[var(--gutter)] md:mx-0 md:px-0">
+        <ul className="-mx-[var(--gutter)] flex gap-10 overflow-x-auto whitespace-nowrap border-b border-line px-[var(--gutter)] md:mx-0 md:gap-16 md:px-0">
           {sections.map((section) => (
             <li key={section.id}>
               <a href={`#${section.id}`} className="inline-flex min-h-12 items-center text-[13px] font-bold hover:text-action">
@@ -87,74 +85,77 @@ export default async function ServicePage({ params }: { params: Params }) {
         </ul>
       </nav>
 
-      <section id="overview" aria-labelledby="overview-title" className="shell pt-10 md:pt-14">
-        <h2 id="overview-title" className="sr-only">
+      <section id="overview" aria-labelledby="overview-title" className="shell scroll-mt-28 pt-10 md:pt-14">
+        <h2 id="overview-title" className="section-title">
           Overview
         </h2>
-        <p className="max-w-[780px]">{detail.overview}</p>
+        <div className="mt-6 max-w-[780px] space-y-4 text-muted">
+          {paragraphs(detail.overview).map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+        </div>
+        {maxim && (
+          <p className="mt-6 font-serif italic text-muted">
+            {maxim.latin} · {maxim.english}
+          </p>
+        )}
       </section>
 
-      <section id="scope" aria-labelledby="scope-title" className="shell pb-16 pt-12 md:pb-24 md:pt-16">
+      <section id="scope" aria-labelledby="scope-title" className="shell scroll-mt-28 pt-12 md:pt-16">
         <h2 id="scope-title" className="section-title">
-          Scope of work
+          Scope of Work
         </h2>
         <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
           {detail.scope.map((area) => (
             <li key={area.title} className="border-t border-line pb-6 pt-4">
-              <h3 className="text-[15px] font-bold leading-[22px]">{area.title}</h3>
-              <p className="mt-2 text-[14px] leading-[22px] text-muted">{area.text}</p>
+              <h3 className="font-serif text-[18px] leading-[26px]">{area.title}</h3>
+              {area.text && <p className="mt-2 text-[14px] leading-[22px] text-muted">{area.text}</p>}
             </li>
           ))}
         </ul>
       </section>
 
       {related.length > 0 && (
-        <section id="related" aria-labelledby="related-title" className="bg-warm">
-          <div className="shell py-14 md:py-20">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <h2 id="related-title" className="section-title">
-                Related services
-              </h2>
-              <Link href="/services" className="link-action">
-                All services <Arrow />
-              </Link>
-            </div>
-            <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
-              {related.map((item) => (
-                <li key={item.id}>
-                  <ServiceCard service={item} />
-                </li>
-              ))}
-            </ul>
-          </div>
+        <section id="related" aria-labelledby="related-title" className="shell scroll-mt-28 pt-12 md:pt-16">
+          <h2 id="related-title" className="section-title">
+            Related Services
+          </h2>
+          <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
+            {related.map((item) => (
+              <li key={item.id}>
+                <ServiceCard service={item} text={relatedNotes[`${service.id}:${item.id}`]} />
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
-      {/* People section stays hidden until approved profiles exist (guide p.30). */}
-
-      <section id="insights" aria-labelledby="insights-title" className="shell py-14 md:py-20">
+      <section id="insights" aria-labelledby="insights-title" className="shell scroll-mt-28 pb-16 pt-12 md:pb-24 md:pt-16">
         <h2 id="insights-title" className="section-title">
           Insights
         </h2>
         {insights.length > 0 ? (
-          <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
-            {insights.map((item) => (
-              <li key={`${item.type}-${item.slug}`}>
-                <PublicationCard publication={item} />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
-            <p className="text-muted">No publications are tagged to this service yet.</p>
-            <Link href="/insights" className="link-action">
-              Browse all insights <Arrow />
+          <>
+            <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
+              {insights.map((item) => (
+                <li key={`${item.type}-${item.slug}`}>
+                  <PublicationCard publication={item} />
+                </li>
+              ))}
+            </ul>
+            <Link href={`/insights?service=${service.slug}`} className="mt-6 inline-flex min-h-11 items-center text-[13px] font-bold underline underline-offset-[6px] hover:text-action">
+              Related Insights
             </Link>
-          </div>
+          </>
+        ) : (
+          <>
+            <p className="mt-6 text-muted">No insights are currently available for this service.</p>
+            <Link href="/insights" className="mt-4 inline-flex min-h-11 items-center text-[13px] font-bold underline underline-offset-[6px] hover:text-action">
+              Browse all insights
+            </Link>
+          </>
         )}
       </section>
-
-      <ContactCta href={`/contact?service=${service.slug}`} />
     </>
   );
 }

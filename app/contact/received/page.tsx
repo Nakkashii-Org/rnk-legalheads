@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import Arrow from "@/components/ui/Arrow";
 import StatusPanel from "@/components/ui/StatusPanel";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -23,16 +22,17 @@ export default async function ContactReceivedPage({ searchParams }: { searchPara
 
   return (
     <StatusPanel
-      title="Your enquiry has been received"
+      eyebrow="RNK Legalheads LLP"
+      title="Your enquiry has been received."
       actions={
-        <Link href="/services" className="btn btn-primary">
-          Return to services <Arrow />
+        <Link href="/" className="btn btn-primary">
+          Return home
         </Link>
       }
     >
       <p>
-        This confirms receipt only and does not mean that RNK Legalheads has accepted instructions. Please do not send
-        confidential documents until the firm confirms how they should be shared.
+        Thank you for contacting RNK Legalheads LLP. Receipt of this enquiry does not confirm acceptance of an engagement. Please wait
+        for the firm to confirm whether it can assist before sending confidential material.
       </p>
       <p className="text-[14px] text-charcoal">
         Reference: <strong className="tabular-nums">{reference}</strong>

@@ -2,13 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import ArticleActions from "@/components/insights/ArticleActions";
 import PublicationCard from "@/components/insights/PublicationCard";
+import ServiceCard from "@/components/services/ServiceCard";
 import Arrow from "@/components/ui/Arrow";
 import DraftNote from "@/components/ui/DraftNote";
 import PageHero from "@/components/ui/PageHero";
 import {
   formatDate,
   publicationTypeMeta,
-  readingMinutes,
   updateStatusLabel,
   type BodyBlock,
   type Publication,
@@ -17,7 +17,10 @@ import {
 import { getContent } from "@/lib/content/source";
 
 function headingId(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 /** Formatted text as React elements (never HTML). A link is re-checked before it is rendered. */
@@ -32,7 +35,11 @@ function Runs({ runs, fallback }: { runs?: Span[]; fallback: string }) {
         if (r.href && /^(https:\/\/|mailto:|\/(?![/\\]))/i.test(r.href)) {
           const external = r.href.startsWith("https://");
           node = (
-            <a href={r.href} className="text-action underline underline-offset-4" {...(external && { target: "_blank", rel: "noopener noreferrer" })}>
+            <a
+              href={r.href}
+              className="text-action underline underline-offset-4"
+              {...(external && { target: "_blank", rel: "noopener noreferrer" })}
+            >
               {node}
               {external && <span className="sr-only"> (opens in a new tab)</span>}
             </a>
@@ -147,26 +154,16 @@ export default async function PublicationDetail({ publication: p }: { publicatio
         />
       )}
 
-      <PageHero
-        breadcrumb={[
-          { label: "Home", href: "/" },
-          { label: "Insights", href: "/insights" },
-          { label: meta.plural, href: meta.basePath },
-          { label: p.title },
-        ]}
-        eyebrow={`${meta.label}${p.preview ? " / Preview" : ""}`}
-        title={p.title}
-        lead={p.summary}
-      >
+      <PageHero eyebrow={`${meta.label}${p.preview ? " / Preview" : ""}`} title={p.title} lead={p.summary}>
         {p.preview && (
           <DraftNote className="mt-6">Editorial template only. Replace with source-checked content before publication.</DraftNote>
         )}
       </PageHero>
 
       <div className="shell">
-        <p className="border-b border-line py-4 text-[13px] leading-5 text-muted">
-          <span>
-            Author:{" "}
+        {p.type === "article" ? (
+          <p className="border-b border-line py-4 text-[13px] leading-5 text-muted">
+            By{" "}
             {p.author.personSlug ? (
               <Link href={`/people/${p.author.personSlug}`} className="underline underline-offset-4 hover:text-charcoal">
                 {p.author.name}
@@ -174,22 +171,35 @@ export default async function PublicationDetail({ publication: p }: { publicatio
             ) : (
               p.author.name
             )}
-          </span>
-          <span aria-hidden="true"> / </span>
-          <span>Published: {formatDate(p.publishedAt) ?? "set on approval"}</span>
-          {p.updatedAt && (
-            <>
-              <span aria-hidden="true"> / </span>
-              <span>Updated: {formatDate(p.updatedAt)}</span>
-            </>
-          )}
-          {p.type === "article" && (
-            <>
-              <span aria-hidden="true"> / </span>
-              <span>{readingMinutes(p)} min read</span>
-            </>
-          )}
-        </p>
+            {p.publishedAt && (
+              <>
+                <span aria-hidden="true"> / </span>
+                {formatDate(p.publishedAt)}
+              </>
+            )}
+          </p>
+        ) : (
+          <p className="border-b border-line py-4 text-[13px] leading-5 text-muted">
+            <span>
+              Author:{" "}
+              {p.author.personSlug ? (
+                <Link href={`/people/${p.author.personSlug}`} className="underline underline-offset-4 hover:text-charcoal">
+                  {p.author.name}
+                </Link>
+              ) : (
+                p.author.name
+              )}
+            </span>
+            <span aria-hidden="true"> / </span>
+            <span>Published: {formatDate(p.publishedAt) ?? "set on approval"}</span>
+            {p.updatedAt && (
+              <>
+                <span aria-hidden="true"> / </span>
+                <span>Updated: {formatDate(p.updatedAt)}</span>
+              </>
+            )}
+          </p>
+        )}
       </div>
 
       <div className="shell grid gap-12 py-12 md:py-16 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-16">
@@ -228,25 +238,39 @@ export default async function PublicationDetail({ publication: p }: { publicatio
             </section>
           )}
 
-          <section aria-labelledby="sources-title" className="mt-12 border-t border-line pt-6">
-            <h2 id="sources-title" className="font-serif text-[22px] leading-[30px]">
-              Sources
-            </h2>
-            <ul className="mt-3 space-y-2 text-[14px] leading-[22px]">
-              {p.sources.map((source) => (
-                <li key={source.label}>
-                  {source.url ? (
-                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline underline-offset-4 hover:text-action">
-                      {source.label}
-                    </a>
-                  ) : (
-                    <span className="text-muted">{source.label}</span>
-                  )}
-                </li>
-              ))}
-            </ul>
-            {checkedAt && <p className="mt-3 text-[12px] text-muted">Checked against the official source on {checkedAt}.</p>}
-          </section>
+          {p.type === "article" && (
+            <p className="mt-12 border-t border-line pt-6 text-[13px] leading-[20px] text-muted">
+              This article provides general information and is not legal advice. The position in a particular matter depends on its facts,
+              documents and applicable law.
+            </p>
+          )}
+
+          {p.sources.length > 0 && (
+            <section aria-labelledby="sources-title" className="mt-12 border-t border-line pt-6">
+              <h2 id="sources-title" className="font-serif text-[22px] leading-[30px]">
+                Sources
+              </h2>
+              <ul className="mt-3 space-y-2 text-[14px] leading-[22px]">
+                {p.sources.map((source) => (
+                  <li key={source.label}>
+                    {source.url ? (
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-4 hover:text-action"
+                      >
+                        {source.label}
+                      </a>
+                    ) : (
+                      <span className="text-muted">{source.label}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              {checkedAt && <p className="mt-3 text-[12px] text-muted">Checked against the official source on {checkedAt}.</p>}
+            </section>
+          )}
         </article>
 
         <aside aria-label="Article tools" className="lg:border-l lg:border-line lg:pl-10 print:hidden">
@@ -266,30 +290,33 @@ export default async function PublicationDetail({ publication: p }: { publicatio
                 </ul>
               </nav>
             )}
-            {services.length > 0 && (
-              <div className="mb-8">
-                <p className="text-[14px] font-bold">Related services</p>
-                <ul className="mt-2">
-                  {services.map((s) => (
-                    <li key={s.id}>
-                      <Link href={`/services/${s.slug}`} className="inline-flex min-h-11 items-center gap-1.5 text-[13px] hover:text-action lg:min-h-9">
-                        {s.title} <Arrow />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
             <ArticleActions />
           </div>
         </aside>
       </div>
 
+      {services.length > 0 && (
+        <section aria-labelledby="related-services-title" className="print:hidden">
+          <div className="shell pb-14 md:pb-20">
+            <h2 id="related-services-title" className="section-title">
+              Related Services
+            </h2>
+            <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+              {services.map((service) => (
+                <li key={service.id}>
+                  <ServiceCard service={service} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
+
       {related.length > 0 && (
         <section aria-labelledby="related-insights-title" className="bg-warm print:hidden">
           <div className="shell py-14 md:py-20">
             <h2 id="related-insights-title" className="section-title">
-              Related insights
+              Related Insights
             </h2>
             <ul className="mt-8 grid gap-x-8 md:grid-cols-3">
               {related.map((item) => (

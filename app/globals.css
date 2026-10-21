@@ -11,7 +11,7 @@
   --color-line: #ddd9d4;
 
   --font-serif: Georgia, "Times New Roman", Times, serif;
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: var(--font-logo), Arial, Helvetica, sans-serif;
 }
 
 :root {

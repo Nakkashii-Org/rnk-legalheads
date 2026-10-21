@@ -4,10 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Logo from "@/components/layout/Logo";
-import Arrow from "@/components/ui/Arrow";
 import { primaryNav } from "@/lib/content/site";
 
-export type HeaderGroup = { name: string; href: string };
+export type HeaderGroup = { name: string; href: string; services: { title: string; href: string }[] };
 
 // Sections whose pages live under more than one path (the mockups mark Insights on all of these).
 const sectionPaths: Record<string, string[]> = {
@@ -22,7 +21,6 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
   const pathname = usePathname();
   const [servicesOpen, setServicesOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [mobileGroupsOpen, setMobileGroupsOpen] = useState(false);
 
   const servicesButtonRef = useRef<HTMLButtonElement>(null);
   const servicesPanelRef = useRef<HTMLDivElement>(null);
@@ -147,7 +145,7 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
                 aria-current={isActive(pathname, "/contact") ? "page" : undefined}
                 className="btn btn-secondary min-h-11 px-5 font-normal aria-[current=page]:bg-warm"
               >
-                Contact <Arrow />
+                Contact
               </Link>
             </li>
             <li>
@@ -175,38 +173,48 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
         </button>
       </div>
 
-      {/* Services mega-menu (N01) */}
+      {/* Services menu: each practice group with its services */}
       <div
         id="services-menu"
         ref={servicesPanelRef}
         hidden={!servicesOpen}
-        className="absolute inset-x-0 top-full border-b border-line bg-canvas"
+        className="absolute inset-x-0 top-full max-h-[calc(100vh-var(--header-height))] overflow-y-auto border-b border-line bg-canvas"
       >
-        <div className="shell-wide grid gap-10 py-10 lg:grid-cols-[1fr_2fr]">
-          <div>
-            <p className="eyebrow">Services</p>
-            <p className="mt-5 font-serif text-[28px] leading-[34px]">
-              Explore our
-              <br />
-              areas of practice.
-            </p>
-            <Link href="/services" className="btn btn-primary mt-7">
-              View all services <Arrow />
-            </Link>
+        <div className="shell-wide py-10">
+          <div className="flex items-start justify-between gap-6">
+            <p className="font-serif text-[30px] leading-[38px]">Services</p>
+            <button
+              type="button"
+              onClick={() => {
+                setServicesOpen(false);
+                servicesButtonRef.current?.focus();
+              }}
+              className="inline-flex min-h-11 items-center text-[13px] font-bold hover:text-action"
+            >
+              Close
+            </button>
           </div>
-          <ul className="grid content-start gap-x-10 sm:grid-cols-2">
-            {[...groups, { name: "Search the directory", href: "/services#directory-search" }].map((group) => (
-              <li key={group.name} className="border-b border-line">
-                <Link
-                  href={group.href}
-                  className="flex min-h-12 items-center justify-between gap-4 text-[14px] hover:text-action"
-                >
+          <div className="mt-6 grid gap-x-10 md:grid-cols-3">
+            {groups.map((group) => (
+              <div key={group.name} className="border-t border-line pb-8 pt-5">
+                <Link href={group.href} className="font-serif text-[20px] leading-[28px] hover:text-action">
                   {group.name}
-                  <Arrow className="text-rnk" />
                 </Link>
-              </li>
+                <ul className="mt-3">
+                  {group.services.map((service) => (
+                    <li key={service.href}>
+                      <Link href={service.href} className="inline-flex min-h-9 items-center text-[13px] font-bold hover:text-action">
+                        {service.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
+          <Link href="/services" className="btn btn-primary mt-2">
+            View all services
+          </Link>
         </div>
       </div>
 
@@ -233,52 +241,39 @@ export default function SiteHeader({ groups }: { groups: HeaderGroup[] }) {
         </div>
         <nav aria-label="Mobile" className="shell-wide pb-12 pt-4">
           <ul>
-            {[...primaryNav, { label: "Contact", href: "/contact" }].map((item) => (
-              <li key={item.href} className="border-b border-line">
-                <div className="flex items-center justify-between">
-                  <Link
-                    href={item.href}
-                    aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                    className="flex min-h-16 flex-1 items-center justify-between font-serif text-[24px]"
-                  >
-                    {item.label}
-                    {item.href !== "/services" && <Arrow className="text-rnk text-[20px]" />}
-                  </Link>
-                  {item.href === "/services" && (
-                    <button
-                      type="button"
-                      aria-expanded={mobileGroupsOpen}
-                      aria-controls="mobile-service-groups"
-                      aria-label="Show service groups"
-                      onClick={() => setMobileGroupsOpen((open) => !open)}
-                      className="inline-flex h-12 w-12 items-center justify-center text-[24px] text-rnk"
-                    >
-                      <span aria-hidden="true">{mobileGroupsOpen ? "−" : "+"}</span>
-                    </button>
-                  )}
-                </div>
-                {item.href === "/services" && (
-                  <ul id="mobile-service-groups" hidden={!mobileGroupsOpen} className="pb-3">
-                    {groups.map((group) => (
-                      <li key={group.name}>
-                        <Link href={group.href} className="flex min-h-11 items-center text-[15px] text-muted">
-                          {group.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+            {[...primaryNav, { label: "Contact", href: "/contact" }, { label: "Search", href: "/search" }].map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                  className="flex min-h-14 items-center text-[24px] font-bold aria-[current=page]:text-action"
+                >
+                  {item.label}
+                </Link>
               </li>
             ))}
           </ul>
-          <Link href="/search" className="btn btn-secondary mt-8">
-            Search the website <Arrow />
+          <div className="mt-6">
+            {groups.map((group) => (
+              <div key={group.name} className="border-t border-line pb-6 pt-5">
+                <Link href={group.href} className="font-serif text-[20px] leading-[28px]">
+                  {group.name}
+                </Link>
+                <ul className="mt-2">
+                  {group.services.map((service) => (
+                    <li key={service.href}>
+                      <Link href={service.href} className="flex min-h-11 items-center text-[14px] font-bold">
+                        {service.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <Link href="/services" className="btn btn-primary mt-4">
+            View all services
           </Link>
-          <p className="mt-6 text-[13px] text-muted">
-            <Link href="/articles" className="hover:text-charcoal">Articles</Link> /{" "}
-            <Link href="/recent-judgments" className="hover:text-charcoal">Recent judgments</Link> /{" "}
-            <Link href="/newsletters" className="hover:text-charcoal">Newsletters</Link>
-          </p>
         </nav>
       </div>
     </header>

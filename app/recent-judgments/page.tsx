@@ -1,11 +1,11 @@
 import PublicationListing, { listingMetadata, type RawParams } from "@/components/insights/PublicationListing";
 
-const LEAD = "Selected decisions with the issue, ruling, procedural context and official source.";
+const LEAD = "Notes on decisions relevant to our areas of practice, with the case, court and source identified.";
 
 type Props = { searchParams: Promise<RawParams> };
 
 export async function generateMetadata({ searchParams }: Props) {
-  return listingMetadata("/recent-judgments", "Recent judgments", LEAD, await searchParams);
+  return listingMetadata("/recent-judgments", "Recent Judgments", LEAD, await searchParams);
 }
 
 export default async function RecentJudgmentsPage({ searchParams }: Props) {
@@ -13,10 +13,9 @@ export default async function RecentJudgmentsPage({ searchParams }: Props) {
     <PublicationListing
       basePath="/recent-judgments"
       type="judgment"
-      title="Recent judgments"
+      title="Recent Judgments"
       lead={LEAD}
-      breadcrumb={[{ label: "Home", href: "/" }, { label: "Insights", href: "/insights" }, { label: "Recent judgments" }]}
-      emptyText="No judgment notes are published yet. Approved notes will appear here."
+      emptyText="No judgment notes are currently available. Browse our articles for practical perspectives on our areas of practice."
       params={await searchParams}
     />
   );

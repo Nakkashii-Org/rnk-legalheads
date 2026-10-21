@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Arrow from "@/components/ui/Arrow";
 import StatusPanel from "@/components/ui/StatusPanel";
 
 export const metadata: Metadata = {
@@ -12,18 +11,18 @@ export const metadata: Metadata = {
 export default function SubscribePendingPage() {
   return (
     <StatusPanel
-      title="Check your email"
+      eyebrow="RNK Legalheads LLP"
+      title="Check your inbox."
       actions={
-        <Link href="/newsletters" className="btn btn-primary">
-          Return to newsletters <Arrow />
+        <Link href="/insights" className="btn btn-primary">
+          Browse insights
         </Link>
       }
     >
       <p>
-        Please check your email. Where the address is eligible, we have sent a confirmation link. Follow the link to
-        complete your subscription.
+        If this address can be subscribed, you will receive an email with a confirmation link. Your subscription starts only after you
+        confirm.
       </p>
-      <p>You will not receive newsletters until confirmation is complete.</p>
     </StatusPanel>
   );
 }

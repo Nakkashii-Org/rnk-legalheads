@@ -3,60 +3,37 @@ import type { PublicationType } from "@/lib/content/publications";
 export type NewsletterIssue = {
   slug: string;
   title: string;
-  /** Short label for the issue series or focus, e.g. "Disputes & Recovery". */
+  /** Series label shown above the title, e.g. "RNK Legalheads Insights / Issue 01". */
   focus: string;
-  /** ISO date, assigned only to approved editions (L01). */
+  /** ISO date, assigned only to approved editions. */
   issueDate?: string;
+  /** Opening paragraph of the issue page. */
   introduction: string;
-  /** Section labels listed under "In this issue". */
+  /** Section labels; the first one is the one-line description on the newsletter list. */
   contents: string[];
-  /** Ordered references to approved publications (guide p.150). */
+  /** Ordered references to publications. */
   items: { type: PublicationType; slug: string }[];
   approved: boolean;
   preview?: boolean;
 };
 
-// Approved web issues come from the CMS. None have been supplied.
-export const issues: NewsletterIssue[] = [];
-
-const PREVIEW_INTRO =
-  "A selected collection of approved publications, with a short editorial introduction.";
-const PREVIEW_ITEMS: NewsletterIssue["items"] = [
-  { type: "article", slug: "preparing-for-a-commercial-transaction" },
-  { type: "judgment", slug: "a-structured-note-on-a-recent-decision" },
-  { type: "update", slug: "tracking-a-regulatory-development" },
-];
-
-// Layout previews from the guide's L01/L02 screens. Draft review mode only.
-export const issueLayoutPreviews: NewsletterIssue[] = [
+// Issue 01 of the final screens. Published from the CMS; publishing never sends an email.
+export const issues: NewsletterIssue[] = [
   {
-    slug: "rnk-legal-update",
-    title: "RNK Legal Update",
-    focus: "General legal update",
-    introduction: "Selected articles, recent decisions and legal developments across our practices.",
-    contents: ["Corporate and commercial matters", "Disputes and recent judgments", "Tax and regulatory updates"],
-    items: PREVIEW_ITEMS,
+    slug: "issue-01-records-that-support-legal-decisions",
+    title: "Records that support legal decisions",
+    focus: "RNK Legalheads Insights / Issue 01",
+    introduction:
+      "This issue brings together three practical articles on preparing the information needed for an intellectual-property review, a commercial dispute and a tax notice. Each begins with the record: what happened, which documents support it and what needs attention next.",
+    contents: ["Practical reading on IP records, commercial disputes and tax notices."],
+    items: [
+      { type: "article", slug: "organising-your-ip-records" },
+      { type: "article", slug: "preparing-a-commercial-dispute-record" },
+      { type: "article", slug: "preparing-records-for-a-tax-notice" },
+    ],
     approved: false,
-    preview: true,
-  },
-  {
-    slug: "disputes-review",
-    title: "Disputes Review",
-    focus: "Disputes & Recovery",
-    introduction: PREVIEW_INTRO,
-    contents: ["Disputes and recent judgments"],
-    items: PREVIEW_ITEMS.slice(1, 2),
-    approved: false,
-    preview: true,
-  },
-  {
-    slug: "business-tax-review",
-    title: "Business & Tax Review",
-    focus: "Business & Tax",
-    introduction: PREVIEW_INTRO,
-    contents: ["Corporate and commercial matters", "Tax and regulatory updates"],
-    items: [PREVIEW_ITEMS[0], PREVIEW_ITEMS[2]],
-    approved: false,
-    preview: true,
   },
 ];
+
+// No layout previews any more: the pages show real content or their empty state.
+export const issueLayoutPreviews: NewsletterIssue[] = [];

@@ -9,6 +9,7 @@ import { getContent } from "@/lib/content/source";
 
 const LEAD =
   "Current opportunities are listed here when positions are open. Each listing explains the role, qualifications and application process.";
+const NO_VACANCIES = "There are no current vacancies listed. Please check this page for future opportunities.";
 
 export const metadata: Metadata = {
   title: "Careers",
@@ -26,31 +27,25 @@ export default async function CareersPage() {
 
   return (
     <>
-      <PageHero
-        breadcrumb={[{ label: "Home", href: "/" }, { label: "Careers" }]}
-        eyebrow="Careers"
-        title="Careers at RNK Legalheads"
-        lead={LEAD}
-      />
+      <PageHero eyebrow="RNK Legalheads LLP" title="Careers at RNK Legalheads" lead={jobs.length === 0 ? NO_VACANCIES : LEAD}>
+        <Link href="/about" className="btn btn-primary mt-8">
+          Explore the firm
+        </Link>
+      </PageHero>
 
-      <section aria-labelledby="opportunities-title" className="shell py-14 md:py-20">
-        <h2 id="opportunities-title" className="section-title">
-          Current opportunities
-        </h2>
+      {jobs.length > 0 && (
+        <section aria-labelledby="opportunities-title" className="shell py-14 md:py-20">
+          <h2 id="opportunities-title" className="section-title">
+            Current opportunities
+          </h2>
 
-        {jobs.length === 0 ? (
-          <p className="mt-6 max-w-[620px] border-t border-line pt-6 text-muted">
-            There are no current vacancies listed. Please check this page for future opportunities, or{" "}
-            <a href="#apply" className="text-charcoal underline underline-offset-4 hover:text-action">
-              send us your CV
-            </a>
-            .
-          </p>
-        ) : (
           <ul className="mt-8">
             {jobs.map((job) => (
               <li key={job.slug}>
-                <Link href={`/careers/${job.slug}`} className="group grid gap-2 border-t border-line py-6 md:grid-cols-[1fr_auto] md:items-center md:gap-8">
+                <Link
+                  href={`/careers/${job.slug}`}
+                  className="group grid gap-2 border-t border-line py-6 md:grid-cols-[1fr_auto] md:items-center md:gap-8"
+                >
                   <span>
                     <span className="block text-[11px] uppercase tracking-[0.14em] text-muted">
                       {job.practice} / {job.location}
@@ -66,8 +61,8 @@ export default async function CareersPage() {
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
 
       <section id="apply" aria-labelledby="apply-title" className="scroll-mt-24 border-t border-line bg-canvas">
         <div className="shell grid grid-cols-1 gap-12 py-14 md:py-20 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-16">
@@ -76,8 +71,7 @@ export default async function CareersPage() {
               Send us your CV
             </h2>
             <p className="mt-4 max-w-[620px] text-muted">
-              Interested in joining RNK Legalheads? Share your details and resume. We will contact you if a suitable
-              opportunity arises.
+              Interested in joining RNK Legalheads? Share your details and resume. We will contact you if a suitable opportunity arises.
             </p>
             <div className="mt-10">
               <ApplicationForm positions={positions} />

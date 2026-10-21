@@ -1,6 +1,6 @@
 import PublicationListing, { listingMetadata, type RawParams } from "@/components/insights/PublicationListing";
 
-const LEAD = "Articles, case notes and legal updates from across our practice areas.";
+const LEAD = "Articles, case notes and legal updates connected with our areas of practice.";
 
 type Props = { searchParams: Promise<RawParams> };
 
@@ -14,8 +14,7 @@ export default async function InsightsPage({ searchParams }: Props) {
       basePath="/insights"
       title="Insights"
       lead={LEAD}
-      breadcrumb={[{ label: "Home", href: "/" }, { label: "Insights" }]}
-      emptyText="No insights are published yet. Approved articles, judgment notes and legal updates will appear here."
+      emptyText="No insights are currently available."
       params={await searchParams}
     />
   );

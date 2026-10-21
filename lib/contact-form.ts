@@ -31,24 +31,23 @@ export function validateContact(fields: ContactFields, allowedServices: string[]
   const message = fields.message.trim();
 
   // International names are accepted; no letters-only restriction.
-  if (name.length < 2) errors.name = "Enter your name.";
+  if (name.length < 2) errors.name = "Please enter your name.";
   else if (name.length > 100) errors.name = "Name must be 100 characters or fewer.";
   else if (LINE_BREAK.test(name)) errors.name = "Name must be on one line.";
 
-  if (!email) errors.email = "Enter your email address.";
-  else if (email.length > 254 || !EMAIL_PATTERN.test(email) || LINE_BREAK.test(email))
-    errors.email = "Enter an email address in the format name@example.com.";
+  if (!email || email.length > 254 || !EMAIL_PATTERN.test(email) || LINE_BREAK.test(email)) errors.email = "Please enter a valid email address.";
 
   if (fields.phone.trim().length > 30 || LINE_BREAK.test(fields.phone)) errors.phone = "Enter a phone number of 30 characters or fewer.";
   if (fields.organisation.trim().length > 150 || LINE_BREAK.test(fields.organisation))
     errors.organisation = "Organisation must be 150 characters or fewer.";
 
-  if (!allowedServices.includes(fields.service)) errors.service = "Choose a service, General enquiry or Not sure.";
+  if (!allowedServices.includes(fields.service)) errors.service = "Please select a service or choose Not sure.";
 
-  if (message.length < MESSAGE_MIN) errors.message = `Describe the subject in at least ${MESSAGE_MIN} characters.`;
+  if (!message) errors.message = "Please enter a brief, non-confidential message.";
+  else if (message.length < MESSAGE_MIN) errors.message = `Please describe the subject in at least ${MESSAGE_MIN} characters.`;
   else if (message.length > MESSAGE_MAX) errors.message = `Keep the description to ${MESSAGE_MAX.toLocaleString("en-GB")} characters or fewer.`;
 
-  if (!fields.acknowledged) errors.acknowledged = "Confirm that you have read the notice before sending.";
+  if (!fields.acknowledged) errors.acknowledged = "Please confirm that you have read the Privacy Policy.";
 
   return errors;
 }
