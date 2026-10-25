@@ -8,7 +8,8 @@ export type ServiceGroupKey =
   | "property"
   | "ip"
   | "people"
-  | "regulated";
+  | "regulated"
+  | "international";
 
 export type ServiceGroup = {
   key: ServiceGroupKey;
@@ -33,9 +34,11 @@ export type Service = {
 };
 
 /**
- * The six practice groups of the final screens, in their order. The keys are the ones the CMS and
- * the newsletter lists already use: "people" now holds Private Client & Consumer, and "regulated"
- * has no services, so it is not listed.
+ * The practice groups shown on the website, in their order: the six of the final screens plus
+ * International Counsel Support. The keys are the ones the CMS and the newsletter lists use
+ * (backend SERVICE_GROUPS and NEWSLETTER_TOPIC_IDS): "people" now holds Private Client & Consumer,
+ * and "regulated" has no services, so it is not listed. Each group listed here is also a
+ * newsletter topic on /subscribe.
  */
 export const serviceGroups: ServiceGroup[] = [
   { key: "ip", alias: "IP", chip: "IP", name: "Intellectual Property", description: "Protection, prosecution, ownership, commercialisation and enforcement." },
@@ -44,6 +47,13 @@ export const serviceGroups: ServiceGroup[] = [
   { key: "tax", alias: "Tax", chip: "Tax", name: "Tax", description: "GST, indirect tax, tax disputes and investigation response." },
   { key: "property", alias: "Property", chip: "Property", name: "Real Estate, Projects & Energy", description: "Property, construction, infrastructure and energy matters." },
   { key: "people", alias: "Private", chip: "Private client", name: "Private Client & Consumer", description: "Succession, family matters and consumer disputes." },
+  {
+    key: "international",
+    alias: "International",
+    chip: "International",
+    name: "International Counsel Support",
+    description: "Support for overseas law firms and in-house teams on matters involving Indian law.",
+  },
 ];
 
 // The twenty services of the final screens. IDs and slugs are kept from the earlier catalogue so the

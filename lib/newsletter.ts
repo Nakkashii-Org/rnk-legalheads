@@ -1,7 +1,7 @@
 import { EMAIL_PATTERN } from "@/lib/contact-form";
 import { serviceGroups } from "@/lib/content/services";
 
-/** Subscription topics follow the seven service groups (L03). */
+/** Subscription topics follow the service groups shown on the website (L03), one Brevo list each. */
 export const NEWSLETTER_TOPICS = serviceGroups.map((group) => ({ id: group.key, label: group.name }));
 
 /**

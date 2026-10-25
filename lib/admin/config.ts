@@ -71,14 +71,17 @@ export const ROLES = [
 
 export const statusLabel =(status: WorkflowStatus) => WORKFLOW_STATUSES.find((s) => s.value === status)!.label;
 
+// Same names and order as the website's groups (lib/content/services.ts). "Regulated" is kept so
+// older records still show their group, but the website does not list it.
 export const SERVICE_GROUP_OPTIONS: Option[] = [
-  { value: "business", label: "Business & Transactions" },
-  { value: "disputes", label: "Disputes & Recovery" },
-  { value: "tax", label: "Tax & Trade" },
-  { value: "property", label: "Property & Projects" },
-  { value: "ip", label: "IP, Technology & Media" },
-  { value: "people", label: "People & Private Matters" },
-  { value: "regulated", label: "Regulated Sectors & Public Law" },
+  { value: "ip", label: "Intellectual Property" },
+  { value: "business", label: "Corporate, Finance & Transactions" },
+  { value: "disputes", label: "Disputes, Investigations & Recovery" },
+  { value: "tax", label: "Tax" },
+  { value: "property", label: "Real Estate, Projects & Energy" },
+  { value: "people", label: "Private Client & Consumer" },
+  { value: "international", label: "International Counsel Support" },
+  { value: "regulated", label: "Regulated Sectors & Public Law (not shown on the website)" },
 ];
 
 const seo: Section = {
