@@ -6,7 +6,34 @@ export type ActionState =
   | { kind: "idle" }
   | { kind: "working"; label: string }
   | { kind: "done"; message: string }
-  | { kind: "failed"; message: string };
+  | { kind: "failed"; message: string; links?: LinkedRecord[] };
+
+/** A record that links to the one being deleted (from the backend's "in_use" answer). */
+export type LinkedRecord = { kind: string; title: string; slug: string; field: string };
+
+const LINK_KIND_PATH: Record<string, string> = {
+  Service: "services",
+  Industry: "industries",
+  Person: "people",
+  Article: "articles",
+  Judgment: "judgments",
+  "Legal update": "legal-updates",
+  Newsletter: "newsletters",
+};
+
+/** The admin edit page of a linking record, where the link can be removed. */
+export function linkedRecordHref(link: LinkedRecord): string | undefined {
+  const type = LINK_KIND_PATH[link.kind];
+  return type ? `/admin/${type}/${encodeURIComponent(link.slug)}` : undefined;
+}
+
+function linkedRecords(data: Record<string, unknown> | null): LinkedRecord[] | undefined {
+  if (data?.error !== "in_use" || !Array.isArray(data.links)) return undefined;
+  const links = data.links.filter(
+    (l): l is LinkedRecord => typeof l?.title === "string" && typeof l?.slug === "string" && typeof l?.kind === "string" && typeof l?.field === "string",
+  );
+  return links.length ? links : undefined;
+}
 
 export const NOT_CONNECTED =
   "This action arrives in a later phase of the CMS, so nothing was saved or changed. Your work is still on this page.";
@@ -44,6 +71,12 @@ export function useAdminAction() {
     if (result.ok) setState({ kind: "done", message: successMessage });
     else if (result.status === 401) setState({ kind: "failed", message: "Your session has ended. Sign in again; your work is still on this page." });
     else if (result.status === 422 && result.data?.errors) setState({ kind: "failed", message: `${label} failed. Fix the fields listed at the top of the form.` });
+    else if (linkedRecords(result.data))
+      setState({
+        kind: "failed",
+        message: "This draft can't be deleted because these records link to it. Open each one, remove the link, save, then delete this draft.",
+        links: linkedRecords(result.data),
+      });
     else if (serverMessage) setState({ kind: "failed", message: serverMessage });
     else if (result.status === 403) setState({ kind: "failed", message: "You do not have permission to do this." });
     else if (result.status === 404) setState({ kind: "failed", message: `${label} failed. ${NOT_CONNECTED}` });
