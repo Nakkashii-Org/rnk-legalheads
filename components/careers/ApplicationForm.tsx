@@ -306,7 +306,7 @@ export default function ApplicationForm({
           Upload your resume
         </label>
         <p id="resume-hint" className="mt-1 text-[13px] text-muted">
-          Required. PDF, DOC or DOCX, up to 5 MB. Do not include identity documents or financial details.
+          Required. PDF, DOC or DOCX, up to 4 MB. Do not include identity documents or financial details.
         </p>
         <input
           ref={fileRef}

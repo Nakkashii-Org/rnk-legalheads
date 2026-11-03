@@ -23,7 +23,8 @@ export type ApplicationErrors = Partial<Record<keyof ApplicationFields, string>>
 export type Option = { value: string; label: string };
 
 export const COVER_NOTE_MAX = 1500;
-export const RESUME_MAX_BYTES = 5 * 1024 * 1024;
+// Vercel accepts at most 4.5 MB per request, form fields included.
+export const RESUME_MAX_BYTES = 4 * 1024 * 1024;
 export const RESUME_EXTENSIONS = [".pdf", ".doc", ".docx"];
 export const RESUME_ACCEPT = [
   ...RESUME_EXTENSIONS,
@@ -63,7 +64,7 @@ export function resumeError(file: File | null): string | undefined {
   const name = file.name.toLowerCase();
   if (!RESUME_EXTENSIONS.some((ext) => name.endsWith(ext))) return "The resume must be a PDF, DOC or DOCX file.";
   if (file.size === 0) return "The selected resume file is empty.";
-  if (file.size > RESUME_MAX_BYTES) return "The resume must be 5 MB or smaller.";
+  if (file.size > RESUME_MAX_BYTES) return "The resume must be 4 MB or smaller.";
   return undefined;
 }
 

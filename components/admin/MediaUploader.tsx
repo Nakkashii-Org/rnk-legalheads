@@ -7,7 +7,8 @@ import { LICENCES } from "@/lib/admin/media";
 import { useAdminAction } from "@/lib/admin/request";
 
 const ACCEPT = ".jpg,.jpeg,.png,.webp,.avif,image/jpeg,image/png,image/webp,image/avif";
-const MAX_BYTES = 10 * 1024 * 1024;
+// Vercel accepts at most 4.5 MB per request, so images are sent one per request and kept under 4 MB.
+const MAX_BYTES = 4 * 1024 * 1024;
 
 type Pending = {
   key: string;
@@ -42,7 +43,7 @@ export default function MediaUploader() {
     const bad: string[] = [];
     for (const file of Array.from(files)) {
       if (!/\.(jpe?g|png|webp|avif)$/i.test(file.name)) bad.push(`${file.name}: use JPG, PNG, WebP or AVIF.`);
-      else if (file.size > MAX_BYTES) bad.push(`${file.name}: larger than 10 MB.`);
+      else if (file.size > MAX_BYTES) bad.push(`${file.name}: larger than 4 MB.`);
       else
         ok.push({
           key: `${file.name}-${file.size}-${file.lastModified}`,
@@ -82,21 +83,39 @@ export default function MediaUploader() {
       document.getElementById(`media-${firstBad.key}-title`)?.focus();
       return;
     }
-    const body = new FormData();
-    checked.forEach((p, i) => {
-      body.append(`files`, p.file);
-      body.append(`meta[${i}]`, JSON.stringify({ title: p.title, alt: p.decorative ? "" : p.alt, decorative: p.decorative, credit: p.credit, licence: p.licence }));
-    });
-    const result = await action.call("Uploading", "/media", { method: "POST", body }, "Uploaded. The images are in the library below, ready to choose in any editor.");
-    // The server checks every file again (real file type, details); its problems are shown per image.
-    const serverErrors = (result.data?.errors ?? {}) as Record<string, string>;
-    if (result.status === 422 && Object.keys(serverErrors).length)
-      setPending((prev) => prev.map((p, i) => ({ ...p, error: serverErrors[String(i)] ?? serverErrors.files })));
-    if (result.ok) {
-      checked.forEach((p) => URL.revokeObjectURL(p.url));
-      setPending([]);
-      router.refresh();
+    // One image per request (see MAX_BYTES). Uploaded images leave the list; the rest stay to fix or retry.
+    const uploaded = new Set<string>();
+    const errors = new Map<string, string>();
+    let stopped = false;
+    for (const [i, p] of checked.entries()) {
+      const body = new FormData();
+      body.append("files", p.file);
+      body.append("meta[0]", JSON.stringify({ title: p.title, alt: p.decorative ? "" : p.alt, decorative: p.decorative, credit: p.credit, licence: p.licence }));
+      const result = await action.call(`Uploading image ${i + 1} of ${checked.length}`, "/media", { method: "POST", body }, `Uploaded image ${i + 1} of ${checked.length}.`);
+      if (result.ok) {
+        uploaded.add(p.key);
+        URL.revokeObjectURL(p.url);
+        continue;
+      }
+      // The server checks every file again (real file type, details); its problems are shown on the image.
+      const serverErrors = (result.data?.errors ?? {}) as Record<string, string>;
+      if (result.status === 422 && Object.keys(serverErrors).length) errors.set(p.key, serverErrors["0"] ?? serverErrors.files ?? "This image was not uploaded.");
+      else {
+        // Session ended, no permission or server unreachable: the notice already says so, and later images would fail too.
+        stopped = true;
+        break;
+      }
     }
+    setPending((prev) => prev.filter((p) => !uploaded.has(p.key)).map((p) => (errors.has(p.key) ? { ...p, error: errors.get(p.key) } : p)));
+    if (uploaded.size) router.refresh();
+    if (stopped) return;
+    if (uploaded.size === checked.length)
+      action.setState({ kind: "done", message: "Uploaded. The images are in the library below, ready to choose in any editor." });
+    else
+      action.setState({
+        kind: "failed",
+        message: `${uploaded.size} of ${checked.length} images uploaded. Fix the images still listed below, then upload them again.`,
+      });
   }
 
   const input = "mt-1 h-11 w-full border border-[#8a8782] bg-canvas px-3 text-[14px] focus:border-charcoal";
@@ -111,7 +130,7 @@ export default function MediaUploader() {
           Choose images
         </label>
         <p id="media-files-hint" className="text-[12px] text-muted">
-          JPG, PNG, WebP or AVIF, up to 10 MB each. Use approved portraits or original/licensed images only.
+          JPG, PNG, WebP or AVIF, up to 4 MB each. Use approved portraits or original/licensed images only.
         </p>
         <input
           ref={inputRef}

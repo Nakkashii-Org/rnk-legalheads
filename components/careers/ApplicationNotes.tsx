@@ -6,7 +6,7 @@ export default function ApplicationNotes() {
     <aside aria-label="Before you apply" className="h-fit bg-warm px-6 py-6 text-[14px] leading-[22px] text-muted">
       <h2 className="text-[16px] font-bold text-charcoal">Before you apply</h2>
       <ul className="mt-3 list-disc space-y-2 pl-5">
-        <li>A resume is required: PDF, DOC or DOCX, up to 5 MB.</li>
+        <li>A resume is required: PDF, DOC or DOCX, up to 4 MB.</li>
         <li>Do not send identity documents, bank details or other financial information at this stage.</li>
         <li>Fields marked optional can be left blank.</li>
       </ul>
